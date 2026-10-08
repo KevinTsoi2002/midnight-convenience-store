@@ -1,0 +1,1552 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0d1718">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='8' fill='%230d1718'/%3E%3Cpath d='M12 18h40v8H12zM18 31h28v21H18z' fill='%23b8d65a'/%3E%3C/svg%3E">
+  <title>凌晨 2:17 的便利店</title>
+  <style>
+    :root {
+      --ink: #0d1718;
+      --ink-soft: #101f20;
+      --panel: #16292a;
+      --panel-raised: #1f3533;
+      --panel-light: #29423e;
+      --lime: #b8d65a;
+      --lime-soft: #d7e3a2;
+      --cream: #e9f4dd;
+      --muted: #8fa9a0;
+      --line: rgba(233, 244, 221, 0.18);
+      --coral: #ed7657;
+      --blue: #7cb8a5;
+      --shadow: 0 24px 70px rgba(0, 0, 0, 0.32);
+      --radius: 8px;
+      --ease: cubic-bezier(.2, .8, .2, 1);
+    }
+
+    * { box-sizing: border-box; }
+
+    html { min-width: 320px; background: var(--ink); }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      min-height: 100vh;
+      color: var(--cream);
+      background: var(--ink);
+      font-family: "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
+      font-size: 16px;
+      line-height: 1.5;
+    }
+
+    button {
+      font: inherit;
+      color: inherit;
+    }
+
+    button:focus-visible {
+      outline: 2px solid var(--lime-soft);
+      outline-offset: 3px;
+    }
+
+    [hidden] { display: none !important; }
+
+    .app-shell {
+      width: min(1440px, 100%);
+      min-height: 100vh;
+      margin: 0 auto;
+      padding: 18px;
+      overflow: hidden;
+      background: var(--ink);
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 46px;
+      padding: 0 2px 14px;
+      border-bottom: 1px solid var(--line);
+      color: var(--lime-soft);
+      font-size: 12px;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+
+    .topbar-meta {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .topbar-clock {
+      color: var(--cream);
+      font-weight: 700;
+      letter-spacing: .2em;
+    }
+
+    .audio-button,
+    .text-button {
+      border: 0;
+      padding: 7px 0;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      transition: color .2s var(--ease);
+    }
+
+    .audio-button:hover,
+    .audio-button[aria-pressed="true"],
+    .text-button:hover {
+      color: var(--lime);
+    }
+
+    .intro-screen {
+      min-height: calc(100vh - 36px);
+      display: grid;
+      grid-template-columns: minmax(0, .88fr) minmax(420px, 1.12fr);
+      align-items: center;
+      gap: 7vw;
+      padding: clamp(28px, 8vw, 112px) clamp(10px, 4vw, 56px);
+    }
+
+    .intro-copy-wrap { max-width: 590px; }
+
+    .eyebrow,
+    .section-kicker,
+    .customer-index {
+      margin: 0 0 18px;
+      color: var(--lime);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+    }
+
+    h1, h2, h3, p { margin-top: 0; }
+
+    h1 {
+      max-width: 620px;
+      margin-bottom: 22px;
+      color: var(--cream);
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 72px;
+      font-weight: 400;
+      letter-spacing: 0;
+      line-height: .96;
+    }
+
+    .intro-copy {
+      max-width: 390px;
+      margin-bottom: 34px;
+      color: var(--muted);
+      font-size: 18px;
+      line-height: 1.7;
+    }
+
+    .primary-button {
+      min-height: 48px;
+      border: 1px solid var(--lime);
+      border-radius: var(--radius);
+      padding: 0 22px;
+      background: var(--lime);
+      color: var(--ink);
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: .05em;
+      transition: background .2s var(--ease), transform .2s var(--ease), box-shadow .2s var(--ease);
+    }
+
+    .primary-button:hover {
+      background: var(--lime-soft);
+      box-shadow: 0 8px 25px rgba(184, 214, 90, .16);
+      transform: translateY(-2px);
+    }
+
+    .primary-button:disabled {
+      border-color: var(--line);
+      background: var(--panel-raised);
+      color: #647b72;
+      cursor: not-allowed;
+      box-shadow: none;
+      transform: none;
+    }
+
+    .intro-note {
+      margin: 16px 0 0;
+      color: #5f7770;
+      font-size: 12px;
+    }
+
+    .store-preview {
+      position: relative;
+      min-height: 430px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      isolation: isolate;
+    }
+
+    .store-preview::before,
+    .store-stage::before {
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      background:
+        linear-gradient(90deg, transparent 0 12%, rgba(184, 214, 90, .05) 12% 13%, transparent 13% 87%, rgba(184, 214, 90, .04) 87% 88%, transparent 88%),
+        linear-gradient(180deg, rgba(22, 41, 42, .1), rgba(8, 16, 17, .75));
+      content: "";
+    }
+
+    .preview-sign {
+      display: flex;
+      justify-content: space-between;
+      padding: 14px 18px;
+      background: var(--lime);
+      color: var(--ink);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .14em;
+    }
+
+    .preview-window {
+      position: absolute;
+      inset: 82px 15% 78px;
+      border: 1px solid #58736b;
+      background:
+        repeating-linear-gradient(106deg, transparent 0 26px, rgba(185, 217, 231, .18) 27px 28px),
+        linear-gradient(180deg, #162f30, #0d1718);
+      overflow: hidden;
+    }
+
+    .preview-window::after {
+      position: absolute;
+      left: 14%;
+      right: 14%;
+      bottom: 24px;
+      height: 2px;
+      background: var(--coral);
+      box-shadow: 0 0 22px rgba(237, 118, 87, .8);
+      content: "";
+    }
+
+    .preview-shelf {
+      position: absolute;
+      left: 12%;
+      right: 12%;
+      height: 62px;
+      border: 1px solid #3b5a52;
+      background: rgba(24, 54, 51, .75);
+    }
+
+    .preview-shelf.one { top: 38px; }
+    .preview-shelf.two { top: 132px; }
+
+    .preview-product {
+      position: absolute;
+      top: 15px;
+      width: 16px;
+      height: 34px;
+      border-radius: 2px 2px 4px 4px;
+      background: var(--coral);
+      box-shadow: 30px 0 var(--lime-soft), 60px 0 var(--blue), 90px 0 #e6c85c;
+    }
+
+    .preview-shelf .preview-product { left: 17%; }
+    .preview-caption {
+      position: absolute;
+      bottom: 18px;
+      left: 8%;
+      color: var(--lime-soft);
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 22px;
+    }
+
+    .game-screen { min-height: calc(100vh - 36px); }
+
+    .game-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(340px, .65fr);
+      gap: 18px;
+      padding-top: 18px;
+    }
+
+    .store-stage {
+      position: relative;
+      min-height: 460px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      background: #102121;
+      isolation: isolate;
+    }
+
+    .store-stage::after {
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      background: repeating-linear-gradient(108deg, transparent 0 24px, rgba(184, 214, 90, .035) 25px 26px);
+      content: "";
+      opacity: .7;
+    }
+
+    .stage-sign {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 48px;
+      padding: 0 18px;
+      background: var(--lime);
+      color: var(--ink);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .12em;
+    }
+
+    .stage-sign span:last-child { letter-spacing: .18em; }
+
+    .stage-window {
+      position: absolute;
+      top: 86px;
+      right: 10%;
+      left: 10%;
+      height: 158px;
+      border: 1px solid #45665d;
+      background:
+        repeating-linear-gradient(106deg, transparent 0 24px, rgba(185, 217, 231, .15) 25px 26px),
+        linear-gradient(180deg, #1d3a3d, #0d1a1c);
+      overflow: hidden;
+    }
+
+    .window-line {
+      position: absolute;
+      right: 9%;
+      bottom: 18px;
+      left: 9%;
+      height: 2px;
+      background: var(--coral);
+      box-shadow: 0 0 24px rgba(237, 118, 87, .7);
+    }
+
+    .shelf {
+      position: absolute;
+      right: 10%;
+      left: 10%;
+      height: 68px;
+      border: 1px solid #3b5a52;
+      background: rgba(22, 48, 46, .82);
+    }
+
+    .shelf.first { top: 277px; }
+    .shelf.second { top: 360px; }
+
+    .shelf::after {
+      position: absolute;
+      right: 0;
+      bottom: -5px;
+      left: 0;
+      height: 4px;
+      background: rgba(184, 214, 90, .25);
+      content: "";
+    }
+
+    .shelf-items {
+      display: flex;
+      align-items: center;
+      gap: 22px;
+      height: 100%;
+      padding: 0 10%;
+    }
+
+    .bottle,
+    .box,
+    .can {
+      display: inline-block;
+      flex: 0 0 auto;
+      width: 18px;
+      height: 38px;
+      border-radius: 3px 3px 5px 5px;
+      background: var(--lime-soft);
+      box-shadow: 18px 5px 0 -2px var(--coral), 36px -2px 0 -3px var(--blue), 56px 2px 0 -1px #e6c85c;
+      opacity: .78;
+    }
+
+    .box { height: 28px; border-radius: 2px; }
+    .can { width: 22px; height: 30px; border-radius: 50%; }
+
+    .counter {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      height: 36px;
+      background: #1e3531;
+      border-top: 1px solid #48635b;
+    }
+
+    .scene-person {
+      position: absolute;
+      right: 19%;
+      bottom: 32px;
+      width: 84px;
+      height: 148px;
+      transition: transform .35s var(--ease), filter .35s var(--ease);
+    }
+
+    .scene-person.is-warm { filter: drop-shadow(0 0 14px rgba(184, 214, 90, .3)); }
+    .scene-person.is-light { filter: drop-shadow(0 0 15px rgba(237, 118, 87, .34)); }
+    .scene-person.is-company { filter: drop-shadow(0 0 15px rgba(124, 184, 165, .28)); }
+
+    .person-head {
+      position: absolute;
+      top: 0;
+      left: 26px;
+      width: 34px;
+      height: 38px;
+      border-radius: 50%;
+      background: #d6b99e;
+      box-shadow: 0 -4px 0 4px #152728;
+    }
+
+    .person-body {
+      position: absolute;
+      top: 35px;
+      left: 13px;
+      width: 60px;
+      height: 92px;
+      border-radius: 24px 24px 8px 8px;
+      background: #263c3a;
+      border: 1px solid #54726a;
+    }
+
+    .person-bag {
+      position: absolute;
+      right: 0;
+      bottom: 2px;
+      width: 29px;
+      height: 36px;
+      border: 2px solid var(--lime-soft);
+      background: #233b37;
+      transform: rotate(6deg);
+    }
+
+    .scene-caption {
+      position: absolute;
+      bottom: 54px;
+      left: 18px;
+      max-width: 48%;
+      color: var(--lime-soft);
+      font-size: 12px;
+      letter-spacing: .03em;
+    }
+
+    .customer-panel,
+    .receipt-panel {
+      border: 1px solid var(--line);
+      background: rgba(22, 41, 42, .82);
+    }
+
+    .customer-panel {
+      min-height: 460px;
+      padding: 28px;
+    }
+
+    .customer-panel h2 {
+      margin-bottom: 2px;
+      color: var(--cream);
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 38px;
+      font-weight: 400;
+      line-height: 1;
+    }
+
+    .customer-role {
+      margin-bottom: 38px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    blockquote {
+      margin: 0 0 24px;
+      color: var(--cream);
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 28px;
+      line-height: 1.35;
+    }
+
+    .customer-hint {
+      max-width: 280px;
+      margin-bottom: 28px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .feedback {
+      margin: 24px 0 20px;
+      padding: 14px 16px;
+      border-left: 2px solid var(--coral);
+      background: rgba(237, 118, 87, .08);
+      color: var(--lime-soft);
+      font-size: 14px;
+      line-height: 1.65;
+      animation: reveal .35s var(--ease);
+    }
+
+    .feedback::before {
+      display: block;
+      margin-bottom: 7px;
+      color: var(--coral);
+      content: "顾客的回声";
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+
+    .game-controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin-top: 26px;
+    }
+
+    .helper-text {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .inventory {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(230px, .35fr);
+      gap: 18px;
+      margin-top: 18px;
+    }
+
+    .inventory-section { min-width: 0; }
+
+    .section-heading {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin: 0 0 9px;
+      color: var(--cream);
+    }
+
+    .section-heading h3 {
+      margin: 0;
+      color: var(--cream);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .section-heading span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .product-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .product-card {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 66px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 9px 11px;
+      background: rgba(22, 41, 42, .7);
+      color: var(--cream);
+      cursor: pointer;
+      text-align: left;
+      transition: border-color .18s var(--ease), background .18s var(--ease), transform .18s var(--ease);
+    }
+
+    .product-card:hover {
+      border-color: #638274;
+      background: var(--panel-raised);
+      transform: translateY(-1px);
+    }
+
+    .product-card.is-selected {
+      border-color: var(--lime);
+      background: rgba(184, 214, 90, .12);
+      box-shadow: inset 3px 0 var(--lime);
+    }
+
+    .product-card:disabled {
+      cursor: not-allowed;
+      opacity: .45;
+      transform: none;
+    }
+
+    .product-icon {
+      display: grid;
+      flex: 0 0 30px;
+      place-items: center;
+      width: 30px;
+      height: 30px;
+      border: 1px solid rgba(233, 244, 221, .24);
+      border-radius: 5px;
+      background: #1f3734;
+      color: var(--lime-soft);
+      font-size: 15px;
+    }
+
+    .product-card.is-selected .product-icon {
+      border-color: var(--lime);
+      background: var(--lime);
+      color: var(--ink);
+    }
+
+    .product-name {
+      overflow: hidden;
+      color: var(--cream);
+      font-size: 13px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .bag {
+      min-height: 176px;
+      border: 1px solid var(--line);
+      padding: 14px;
+      background: rgba(22, 41, 42, .7);
+    }
+
+    .bag.empty { color: #688078; }
+
+    .bag-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-top: 12px;
+    }
+
+    .bag-item {
+      border: 1px solid rgba(184, 214, 90, .45);
+      border-radius: 4px;
+      padding: 5px 7px;
+      background: rgba(184, 214, 90, .1);
+      color: var(--lime-soft);
+      font-size: 12px;
+    }
+
+    .receipt-panel {
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .receipt-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .receipt-line {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .receipt-line strong {
+      color: var(--lime-soft);
+      font-weight: 600;
+    }
+
+    .ending-screen {
+      display: grid;
+      grid-template-columns: minmax(0, .9fr) minmax(320px, .75fr);
+      align-items: center;
+      gap: 8vw;
+      min-height: calc(100vh - 36px);
+      padding: 48px clamp(12px, 8vw, 120px);
+    }
+
+    .ending-screen h1 { font-size: 64px; }
+
+    .ending-copy {
+      max-width: 420px;
+      margin-bottom: 30px;
+      color: var(--muted);
+      font-size: 17px;
+      line-height: 1.8;
+      white-space: pre-line;
+    }
+
+    .ending-receipt {
+      border: 1px solid var(--line);
+      padding: 24px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    .receipt-title {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      color: var(--lime);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+    }
+
+    .ending-receipt .receipt-line {
+      padding: 12px 0;
+      border-top: 1px dashed var(--line);
+    }
+
+    .ending-receipt .receipt-line:last-child { border-bottom: 1px dashed var(--line); }
+
+    .status-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .status-bar strong { color: var(--lime-soft); font-weight: 600; }
+
+    @keyframes reveal {
+      from { opacity: 0; transform: translateY(7px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 900px) {
+      .intro-screen,
+      .ending-screen {
+        grid-template-columns: 1fr;
+        gap: 42px;
+        padding-top: 58px;
+        padding-bottom: 58px;
+      }
+
+      .store-preview { min-height: 340px; }
+      .game-layout { grid-template-columns: 1fr; }
+      .store-stage, .customer-panel { min-height: 390px; }
+      .inventory { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 560px) {
+      .app-shell { padding: 10px; }
+      .intro-screen { min-height: calc(100vh - 20px); padding: 38px 8px; }
+      .ending-screen { min-height: calc(100vh - 20px); padding: 38px 8px; }
+      h1 { font-size: 44px; }
+      .intro-copy { font-size: 16px; }
+      .store-preview { min-height: 290px; }
+      .preview-window { inset: 66px 9% 48px; }
+      .stage-window { top: 68px; right: 6%; left: 6%; height: 132px; }
+      .shelf { right: 6%; left: 6%; }
+      .shelf.first { top: 238px; }
+      .shelf.second { top: 314px; }
+      .scene-person { right: 12%; bottom: 34px; transform: scale(.8); transform-origin: bottom right; }
+      .scene-caption { max-width: 55%; bottom: 45px; left: 12px; }
+      .customer-panel { min-height: 0; padding: 22px; }
+      .customer-role { margin-bottom: 25px; }
+      blockquote { font-size: 25px; }
+      .product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .product-card { min-height: 60px; padding: 8px; }
+      .product-icon { flex-basis: 27px; width: 27px; height: 27px; }
+      .product-name { font-size: 12px; }
+      .topbar { padding-right: 2px; }
+      .topbar-meta { gap: 12px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        scroll-behavior: auto !important;
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+      }
+    }
+
+    /* The store is the primary scene; UI rails sit alongside it without nested panels. */
+    .intro-screen {
+      position: relative;
+      display: block;
+      min-height: calc(100svh - 36px);
+      padding: 0;
+      background: #142625;
+      overflow: hidden;
+      isolation: isolate;
+    }
+    .intro-copy-wrap {
+      position: relative;
+      z-index: 2;
+      width: 470px;
+      padding: 150px 0 110px 48px;
+      pointer-events: none;
+    }
+    .intro-copy-wrap .primary-button { pointer-events: auto; }
+    .intro-copy { max-width: 310px; color: #ced8c9; font-size: 16px; }
+    .intro-note { color: #afbeb2; }
+    .intro-screen .store-preview {
+      position: absolute;
+      inset: 0;
+      min-height: 0;
+      border: 0;
+      box-shadow: none;
+      background: none;
+      z-index: 0;
+    }
+    .intro-screen .store-preview::before { display: none; }
+    .intro-screen::after {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      background: linear-gradient(90deg,rgba(8,20,19,.92),rgba(8,20,19,.68) 31%,rgba(8,20,19,.1) 60%,transparent);
+      content: "";
+      pointer-events: none;
+    }
+    .intro-screen .scene-art { height: 100%; width: 100%; object-fit: cover; }
+    .game-layout { grid-template-columns: minmax(0, 1.5fr) minmax(320px, 1fr); gap: 32px; }
+    .topbar { color: #b7c5b7; font-size: 12px; }
+    .store-stage {
+      min-height: 0;
+      aspect-ratio: 8 / 4.8;
+      border-color: #3a5247;
+      background: #182b25;
+    }
+    .store-stage::before, .store-stage::after { display: none; }
+    .scene-art { display: block; width: 100%; height: 100%; }
+    .scene-caption {
+      bottom: 0;
+      left: 0;
+      max-width: none;
+      width: 100%;
+      margin: 0;
+      padding: 12px 16px;
+      background: rgba(8,20,19,.86);
+      color: #d5ddbf;
+      line-height: 1.5;
+      font-size: 12px;
+      border-top: 1px solid #3a5247;
+    }
+    .rain-streaks { animation: rainfall 1.4s linear infinite; }
+    .scene-person-art { transform-box: fill-box; transform-origin: center bottom; animation: breathing 6s ease-in-out infinite; }
+    .customer-panel { min-height: 0; padding: 20px 8px 16px 0; background: none; border: 0; }
+    .customer-role { margin-bottom: 24px; }
+    .customer-hint { display: none; }
+    .customer-observation { max-width: 310px; color: #a9bdb0; margin-bottom: 25px; font-size: 13px; line-height: 1.8; }
+    .customer-panel blockquote { margin-bottom: 18px; }
+    .feedback { margin-top: 18px; margin-bottom: 16px; background: rgba(237,118,87,.07); font-size: 13px; }
+    .inventory { grid-template-columns: minmax(0,1.5fr) minmax(320px,1fr); gap: 32px; margin-top: 26px; }
+    .section-heading { margin-bottom: 12px; }
+    .section-heading h3 { font-size: 15px; }
+    .product-grid { gap: 9px; }
+    .product-card { min-height: 90px; border-radius: 4px; padding: 8px 10px; gap: 12px; background: #172824; }
+    .product-card:disabled { opacity: .65; }
+    .product-card.is-selected:disabled { opacity: .9; }
+    .product-icon { width: 40px; height: 58px; flex: 0 0 40px; border: 0; border-radius: 0; background: none; }
+    .product-card.is-selected .product-icon { border: 0; background: none; }
+    .product-name { display: block; font-size: 14px; white-space: normal; overflow: visible; }
+    .product-description { display: block; color: #9faf9f; font-size: 11px; margin-top: 5px; }
+    .product-card.is-selected .product-description { color: #bfd399; }
+    .selected-mark { width: 14px; height: 14px; flex: 0 0 14px; margin-left: auto; color: var(--lime); }
+    .product-icon > svg { width: 100%; height: 100%; }
+    .product-card:not(.is-selected) .selected-mark { opacity: 0; }
+    .bag { min-height: 200px; background: none; border: 0; border-top: 1px dashed #5b6b58; padding: 18px 0; }
+    .bag-list { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 10px; margin-top: 0; }
+    .bag-item { display: flex; flex-direction: column; align-items: center; padding: 12px 4px; border: 0; background: #1b2e27; font-size: 12px; gap: 8px; }
+    .bag-item svg { width: 36px; height: 48px; }
+    .bag-empty { min-height: 150px; display: grid; place-items: center; border-bottom: 1px dashed #5b6b58; color: #b4c1ac; }
+    .game-controls { margin-top: 8px; }
+    .helper-text { color: #a9b6a1; }
+    .receipt-panel { background: none; border: 0; border-top: 1px solid var(--line); padding: 18px 0 12px; }
+    .receipt-line { color: #b4c3b2; line-height: 1.7; }
+    .receipt-line strong { flex: 0 0 auto; }
+    .ending-receipt { background: #e7ebd7; color: #263629; border: 0; box-shadow: none; border-bottom: 8px dotted var(--ink); }
+    .ending-receipt .receipt-title, .ending-receipt .receipt-line, .ending-receipt strong, .ending-receipt .status-bar { color: #344535; }
+    .ending-receipt .receipt-line { border-color: #9ca98f; }
+    .ending-receipt .receipt-line:last-child { border-color: #9ca98f; }
+    .ending-receipt .status-bar { font-size: 12px; }
+    .ending-screen h1 { font-size: 56px; line-height: 1.15; }
+    .scene-header { font-size: 15px; fill: #dbdfb8; font-weight: 600; }
+    .scene-shop-label { font-family: monospace; fill: #b9cf85; }
+    .global-audio {
+      position: fixed;
+      z-index: 5;
+      top: 24px;
+      right: max(24px, calc((100vw - 1440px) / 2 + 24px));
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 44px;
+      padding: 8px 12px;
+      background: #0d1718;
+      color: #bfccb6;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+    .global-audio svg { width: 18px; height: 18px; }
+    @keyframes rainfall { to { transform: translate(-12px,26px); } }
+    @keyframes breathing { 50% { transform: translateY(1.5px); } }
+    @media (max-width: 1100px) {
+      h1 { font-size: 60px; }
+      .game-layout, .inventory { gap: 22px; grid-template-columns: minmax(0,1.3fr) minmax(300px,1fr); }
+      .product-card { gap: 8px; padding: 8px; }
+      .product-description { font-size: 10px; }
+      .product-icon { flex-basis: 32px; width: 32px; }
+      .customer-panel h2 { font-size: 34px; }
+      blockquote { font-size: 25px; }
+    }
+    @media (max-width: 900px) {
+      .game-layout, .inventory { grid-template-columns: 1fr; gap: 18px; }
+      .intro-copy-wrap { padding-top: 135px; width: 420px; }
+      .customer-panel { padding: 6px 2px 4px; }
+      .customer-panel .customer-index { margin-bottom: 12px; }
+      .customer-observation { max-width: none; margin-bottom: 16px; }
+      .product-description { font-size: 11px; }
+      .store-stage { min-height: 0; }
+      .bag { min-height: 125px; padding: 12px 0; }
+      .bag-empty { min-height: 90px; }
+    }
+    @media (max-width: 560px) {
+      .global-audio { top: 9px; right: 12px; padding: 6px 8px; }
+      .app-shell { padding: 12px; }
+      .intro-screen { min-height: calc(100svh - 24px); padding: 0; }
+      .intro-copy-wrap { padding: 100px 22px 48px; width: 100%; }
+      .intro-screen .scene-art { width: 960px; max-width: none; transform: translateX(-345px); }
+      .intro-screen::after { background: linear-gradient(180deg,rgba(8,20,19,.62),rgba(8,20,19,.48) 45%,rgba(8,20,19,.05)); }
+      h1 { font-size: 46px; line-height: 1.1; }
+      .intro-copy { max-width: 255px; }
+      .ending-screen h1 { font-size: 38px; }
+      .ending-screen { grid-template-columns: 1fr; gap: 32px; padding: 42px 8px; }
+      .customer-panel h2 { font-size: 32px; }
+      .customer-panel blockquote { font-size: 25px; }
+      .customer-role { margin-bottom: 15px; }
+      .store-stage { aspect-ratio: 8 / 5.3; }
+      .scene-caption { font-size: 11px; padding: 8px 10px; }
+      .product-grid { grid-template-columns: repeat(3,minmax(0,1fr)); gap: 6px; }
+      .product-card { flex-direction: column; align-items: center; min-height: 122px; gap: 5px; padding: 8px 4px; position: relative; text-align: center; }
+      .product-icon { width: 34px; height: 48px; flex-basis: 48px; }
+      .product-name { font-size: 12px; }
+      .product-description { font-size: 10px; line-height: 1.4; margin-top: 3px; }
+      .selected-mark { position: absolute; right: 5px; top: 5px; }
+      .ending-receipt { padding: 20px 16px; }
+      .ending-receipt .receipt-line { font-size: 11px; }
+    }
+    * { letter-spacing: 0 !important; }
+  </style>
+</head>
+<body>
+  <main class="app-shell" id="app" data-screen="intro">
+    <button class="audio-button global-audio" type="button" data-action="toggle-audio" aria-pressed="false">声音：关</button>
+    <section class="intro-screen" data-screen-panel="intro" aria-labelledby="game-title">
+      <div class="intro-copy-wrap">
+        <p class="eyebrow">NIGHT SHIFT / 02:17</p>
+        <h1 id="game-title">凌晨 2:17<br>的便利店</h1>
+        <p class="intro-copy">给今晚还没结束的人，装一袋刚刚好的东西。</p>
+        <button class="primary-button" type="button" data-action="start">开始值班</button>
+        <p class="intro-note">门铃响了。今晚还有三位客人。</p>
+      </div>
+      <div class="store-preview" data-intro-art aria-label="荧光绿夜班便利店预览"></div>
+    </section>
+
+    <section class="game-screen" data-screen-panel="game" hidden aria-labelledby="customer-name">
+      <header class="topbar">
+        <div class="topbar-meta">
+          <span class="topbar-clock" data-clock>02:17</span>
+          <span data-customer-progress>01 / 03</span>
+        </div>
+      </header>
+
+      <div class="game-layout">
+        <section class="store-stage" data-store-stage aria-label="便利店场景"></section>
+        <aside class="customer-panel" data-customer-panel aria-live="polite"></aside>
+      </div>
+
+      <div class="inventory">
+        <section class="inventory-section" aria-labelledby="shelf-heading">
+          <div class="section-heading">
+            <h3 id="shelf-heading">货架</h3>
+            <span>03 ITEMS / ONE LITTLE BAG</span>
+          </div>
+          <div class="product-grid" data-product-grid aria-label="商品货架"></div>
+        </section>
+        <section class="inventory-section" aria-labelledby="bag-heading">
+          <div class="section-heading">
+            <h3 id="bag-heading">购物袋</h3>
+            <span data-bag-count>0 / 3</span>
+          </div>
+          <div class="bag empty" data-bag aria-live="polite">还没有放入东西。</div>
+          <div class="game-controls">
+            <span class="helper-text" data-action-hint>袋子还空着。</span>
+            <button class="primary-button" type="button" data-action="submit-bag" disabled>装袋</button>
+          </div>
+        </section>
+      </div>
+
+      <section class="receipt-panel" aria-labelledby="receipt-heading">
+        <div class="section-heading">
+          <h3 id="receipt-heading">夜班小票</h3>
+          <span>KEEP THE LIGHT ON</span>
+        </div>
+        <div class="receipt-list" data-receipt aria-live="polite">
+          <div class="receipt-line"><span>这一晚还没有客人</span><strong>02:17</strong></div>
+        </div>
+      </section>
+    </section>
+
+    <section class="ending-screen" data-screen-panel="ending" hidden aria-labelledby="ending-title"></section>
+  </main>
+
+  <script>
+    (() => {
+      const products = [
+        { id: "coffee", name: "热咖啡", description: "苦一点，醒一点", tags: ["warmth", "energy"] },
+        { id: "milk", name: "蜂蜜牛奶", description: "不太甜，刚好暖", tags: ["warmth", "comfort"] },
+        { id: "bar", name: "能量棒", description: "再撑一小段路", tags: ["energy", "practical"] },
+        { id: "warmer", name: "暖手贴", description: "掌心的一小团火", tags: ["warmth", "comfort"] },
+        { id: "gum", name: "口香糖", description: "薄荷味的清醒", tags: ["energy"] },
+        { id: "magazine", name: "杂志", description: "把等待翻成几页", tags: ["company"] },
+        { id: "umbrella", name: "小雨伞", description: "雨里也能往前走", tags: ["practical", "comfort"] },
+        { id: "battery", name: "电池", description: "给熄掉的灯续航", tags: ["light", "practical"] },
+        { id: "hot-food", name: "热食", description: "坐一会儿再吃", tags: ["warmth", "company"] }
+      ];
+
+      const customers = [
+        {
+          id: "cheng",
+          name: "阿成",
+          role: "外卖员",
+          line: "还有一单。手有点冷。",
+          observation: "他揉了揉冻红的指节。头盔没有摘，手机又亮了一次。",
+          needs: ["warmth", "energy"],
+          response: {
+            high: "他把袋子接过去，掌心终于有了一点热度，肩膀也松了一下。",
+            mid: "他点点头，说了声谢谢，又看向门外。",
+            low: "他把袋子挂在车把上，风很快又把门吹开了。"
+          }
+        },
+        {
+          id: "xiaoyu",
+          name: "小雨",
+          role: "学生",
+          line: "我不饿，只想买点能带走的光。",
+          observation: "书包上挂着一盏没电的小灯。她的目光，停在杂志上的那片星空。",
+          needs: ["light", "company"],
+          response: {
+            high: "她把电池放进口袋，像是终于有了一盏备用的小灯。",
+            mid: "她在货架前多站了一会儿，然后轻轻挥了挥手。",
+            low: "她拿着袋子，却没有立刻走进雨里。"
+          }
+        },
+        {
+          id: "unnamed",
+          name: "没有名字的人",
+          role: "等雨的人",
+          line: "雨停了我就走。",
+          observation: "肩上落着雨，胃里响了一声。他看了看窗边那张空着的椅子。",
+          needs: ["comfort", "company"],
+          response: {
+            high: "他在靠窗的位置坐下，雨声变得没有那么远了。",
+            mid: "他看了看雨幕，说：“这里挺亮的。”",
+            low: "他站在门边，像是在等一句还没有说出口的话。"
+          }
+        }
+      ];
+
+      const endings = {
+        bright: {
+          title: "今晚的灯一直亮着",
+          copy: "你没有解决所有人的夜晚。\n但至少，每个人都拿到了一点可以继续走下去的东西。",
+          tone: "warm"
+        },
+        rain: {
+          title: "雨停了，但店里还有人",
+          copy: "有些帮助不会立刻变成答案。\n它只是让等待的时候，没有那么冷。",
+          tone: "rain"
+        },
+        stay: {
+          title: "打烊之前，请再坐一会儿",
+          copy: "门外还是凌晨。\n不过这家店，暂时还没有关灯。",
+          tone: "stay"
+        }
+      };
+
+      const state = {
+        screen: "intro",
+        customerIndex: 0,
+        selectedProductIds: [],
+        roundScores: [],
+        receipt: [],
+        audioEnabled: false,
+        audioUnavailable: false,
+        showFeedback: false,
+        lastFeedback: null
+      };
+
+      let audioContext = null;
+
+      const app = document.querySelector("#app");
+      const introPanel = document.querySelector('[data-screen-panel="intro"]');
+      const gamePanel = document.querySelector('[data-screen-panel="game"]');
+      const endingPanel = document.querySelector('[data-screen-panel="ending"]');
+      const customerPanel = document.querySelector("[data-customer-panel]");
+      const stage = document.querySelector("[data-store-stage]");
+      const productGrid = document.querySelector("[data-product-grid]");
+      const bag = document.querySelector("[data-bag]");
+      const bagCount = document.querySelector("[data-bag-count]");
+      const submitButton = document.querySelector('[data-action="submit-bag"]');
+      const receipt = document.querySelector("[data-receipt]");
+      const progress = document.querySelector("[data-customer-progress]");
+      const audioButton = document.querySelector('[data-action="toggle-audio"]');
+      const startButton = document.querySelector('[data-action="start"]');
+
+      function scoreSelection(customer, selectedIds) {
+        const selectedTags = new Set(
+          products
+            .filter((product) => selectedIds.includes(product.id))
+            .flatMap((product) => product.tags)
+        );
+        return customer.needs.reduce((score, need) => score + (selectedTags.has(need) ? 1 : 0), 0);
+      }
+
+      function responseLevel(score) {
+        return score >= 2 ? "high" : score === 1 ? "mid" : "low";
+      }
+
+      function getEnding(roundScores) {
+        const total = roundScores.reduce((sum, score) => sum + score, 0);
+        if (total >= 6) return "bright";
+        if (total >= 3) return "rain";
+        return "stay";
+      }
+
+      function productDrawing(id) {
+        const drawings = {
+          coffee: `<path d="M10 18h28l-4 39H14Z" fill="#ede5c6"/><path d="M14 32h21l-2 14H16Z" fill="#c5694e"/>
+            <rect x="8" y="14" width="32" height="6" rx="2" fill="#293d32"/><path d="M19 3q-5 5 0 9m9-9q-5 5 0 9" fill="none" stroke="#d2dec0" stroke-width="1.5"/><circle cx="24" cy="39" r="4" fill="#eaddb0"/>`,
+          milk: `<path d="M14 12h20v10l3 5v30H11V27l3-5Z" fill="#e3e9ca"/><rect x="14" y="7" width="20" height="8" rx="2" fill="#bfce77"/>
+            <rect x="14" y="33" width="20" height="15" rx="1" fill="#dcac52"/><path d="m24 36 4 3-1 5h-6l-1-5Z" fill="#f7e7b4"/><path d="M14 53h20" stroke="#bfc9a5" stroke-width="2"/>`,
+          bar: `<path d="m15 7 21 7-10 43L5 51Z" fill="#cc6951"/><path d="m18 12 12 4-6 27-12-4Z" fill="#e7dab4"/>
+            <path d="m18 19 8 3m-9 3 8 3m-9 3 8 3" stroke="#6f5538" stroke-width="2.5"/><path d="m5 51 21 6m-11-50 21 7" stroke="#ecad86" stroke-width="3"/>`,
+          warmer: `<rect x="5" y="11" width="38" height="44" rx="3" fill="#d87757"/><rect x="9" y="16" width="30" height="34" rx="2" fill="#f1dfae"/>
+            <path d="M24 23q-9 9-9 15a9 9 0 0 0 18 0c0-5-5-9-9-15Z" fill="#d87757"/><path d="M24 35q-4 4-4 7a4 4 0 0 0 8 0Z" fill="#f2cf75"/>`,
+          gum: `<rect x="10" y="13" width="28" height="40" rx="5" fill="#8fc3a3"/><path d="M13 20h22v6H13Z" fill="#2e6650"/>
+            <path d="M18 39q1-9 12-8-1 10-12 8Z" fill="#e1ead0"/><path d="m18 40 11-8" stroke="#4a8261" stroke-width="1.5"/><path d="M13 49h22" stroke="#588e74" stroke-width="2"/>`,
+          magazine: `<path d="M7 8h33v49H7Z" fill="#c5d5ad"/><path d="M11 12h25v35H11Z" fill="#274938"/>
+            <circle cx="28" cy="23" r="6" fill="#dacf91"/><path d="m12 44 9-13 7 11 8-9" fill="#729472"/><path d="M12 52h13" stroke="#40684e" stroke-width="2"/><path d="M7 8v49" stroke="#728a64" stroke-width="2"/>`,
+          umbrella: `<path d="m20 9 8 1 6 35-19 1Z" fill="#83ac97"/><path d="m24 10-2 31m3-28 4 28" stroke="#527d65" stroke-width="1.5"/>
+            <path d="M24 46v9a5 5 0 0 0 10 0" fill="none" stroke="#e2d2b1" stroke-width="3.5" stroke-linecap="round"/><path d="M14 41h21v4H14Z" fill="#365744"/>`,
+          battery: `<rect x="10" y="12" width="12" height="39" rx="2" fill="#a9c476"/><rect x="27" y="12" width="12" height="39" rx="2" fill="#a9c476"/>
+            <path d="M13 9h6v4h-6Zm17 0h6v4h-6Z" fill="#d6dfb9"/><path d="M10 23h12v25H10Zm17 0h12v25H27Z" fill="#304b38"/><path d="m16 29-3 8h4l-1 7 4-9h-4Z" fill="#d3db99"/><path d="m33 29-3 8h4l-1 7 4-9h-4Z" fill="#d3db99"/>`,
+          "hot-food": `<path d="M6 30h36l-5 25H11Z" fill="#e3d7ba"/><ellipse cx="24" cy="30" rx="18" ry="6" fill="#a16c3d"/>
+            <ellipse cx="24" cy="29" rx="12" ry="3" fill="#e4ad62"/><path d="M12 41h24l-1 7H13Z" fill="#cc7252"/><path d="M16 10q-5 5 0 12m8-17q-5 7 0 14m8-9q-5 5 0 12" fill="none" stroke="#ccd6b8" stroke-width="1.5"/>`
+        };
+        return `<svg width="48" height="64" viewBox="0 0 48 64" aria-hidden="true" focusable="false">${drawings[id] || ""}</svg>`;
+      }
+
+      function customerDrawing(index, feedback) {
+        const details = [
+          `<path d="M25 57Q17 27 51 25q33 2 25 32" fill="#b9ce72" stroke="#263b2c" stroke-width="3"/>
+            <path d="M26 48h49v10H26Z" fill="#e1e5c0"/><path d="m22 101 32-8 24 11-6 88H27Z" fill="#a9bf67"/>
+            <path d="M30 108h43v21H30Z" fill="#657d45"/><path d="M53 96v95" stroke="#dae0a2" stroke-width="2"/><path d="M32 152h36v20H32Z" fill="#8da653"/>
+            <path d="M23 111 11 163l19 13 10-14" fill="#93aa59"/><path d="M73 111 88 149l-21 15-8-15" fill="#93aa59"/>`,
+          `<path d="M23 63q-3-40 28-40 34 2 27 59l-18 9-31-9Z" fill="#273b2e"/>
+            <path d="m30 100 24-8 25 12-6 88H24Z" fill="#b57157"/><path d="m30 100 14 18 10-20 10 20 14-14" fill="#d2c5a1"/>
+            <path d="M36 124h30v8H36Z" fill="#835645"/><path d="M24 106 9 151l18 15 13-12" fill="#a5654c"/><path d="M75 107 88 154l-15 13-10-10" fill="#a5654c"/>
+            <path d="m24 109 6 62m46-61-8 62" stroke="#364838" stroke-width="5"/><rect x="71" y="141" width="8" height="11" rx="2" fill="#d8dcbe"/><circle cx="75" cy="146" r="2" fill="#718869"/>`,
+          `<path d="M26 46q1-21 27-21 25 0 25 21l-5 20H28Z" fill="#50674c"/><path d="M20 47h66" stroke="#647b5b" stroke-width="6" stroke-linecap="round"/>
+            <path d="m28 101 23-11 24 12 7 90H18Z" fill="#63826c"/><path d="m35 98 18 44 16-44" fill="#d7d4ad"/><path d="m52 119 1 73" stroke="#3c5d4a" stroke-width="2"/>
+            <path d="m26 113-17 43 20 13 14-13m32-43 14 43-15 13-14-13" fill="#54735c"/><path d="M26 153h16v22H26Zm39 0h13v22H65Z" fill="#496953"/>`
+        ];
+        const handPosition = feedback ? 153 : 156;
+        const face = `<g data-face>
+          <ellipse cx="52" cy="65" rx="24" ry="30" fill="#d8b28b"/>
+          <path d="m46 79 7 2 7-2" fill="none" stroke="#9a6f52" stroke-width="1.8" stroke-linecap="round"/>
+          <path d="M39 65h6m13 0h6" stroke="#364636" stroke-width="2" stroke-linecap="round"/>
+          <path d="M48 87h10v15H48Z" fill="#c5a080"/>
+          ${index === 1 ? '<path d="M27 57q0-31 25-31t25 31L62 45l-12 7-10-6Z" fill="#273b2e"/>' : ""}
+        </g>`;
+        return `<g data-scene-customer="${customers[index].id}" transform="translate(435 131) scale(1.1)"><g class="scene-person-art">
+          <ellipse cx="53" cy="202" rx="50" ry="8" fill="#0c1b15" opacity=".5"/>
+          <path d="M30 175h20l-3 33H28Zm27 0h21l5 33H60Z" fill="#253b2e"/>
+          <path d="M27 208h21v6H24Zm32 0h25l5 6H59Z" fill="#1b2d23"/>
+          ${index !== 1 ? face : ""}
+          ${details[index]}
+          <path d="m29 ${handPosition} 11-3 4 10-12 5Zm34 0 10 3-2 11-13-4Z" fill="#d8b28b"/>
+          ${feedback ? `<g data-scene-bag><path d="M39 163h25l-2 27H40Z" fill="#d9dfb4"/><path d="M44 163v-8q0-8 7-8t7 8v8" fill="none" stroke="#c4cda1" stroke-width="2"/><circle cx="51" cy="176" r="5" fill="#a1b55c"/></g>` : ""}
+          ${index === 1 ? face : ""}
+        </g></g>`;
+      }
+
+      function sceneArtwork(index = 0, feedback = false, intro = false) {
+        const lightColor = feedback
+          ? ["#edb18b", "#cddd94", "#f0e8b7"][state.roundScores.at(-1)]
+          : "#dde6a2";
+        const shelfProducts = [
+          ["coffee", "milk", "bar", "warmer"],
+          ["gum", "magazine", "battery", "hot-food"]
+        ].map((ids, row) => ids.map((id, column) =>
+          `<g transform="translate(${228 + column * 40} ${178 + row * 72}) scale(.56)">${productDrawing(id)}</g>`
+        ).join("")).join("");
+        const rain = Array.from({ length: 16 }, (_, i) =>
+          `<path d="m${22 + i * 13} ${-15 + (i % 3) * 16}-12 26" fill="none" stroke="#98b6a0" stroke-width="1" opacity=".45"/>`
+        ).join("");
+        return `<svg class="scene-art" viewBox="0 0 800 480" role="img" aria-label="${intro ? "凌晨仍亮着灯的便利店，窗外下着雨" : `${customers[index].name}来到便利店的收银台前`}">
+          <defs>
+            <pattern id="${intro ? "intro" : "game"}-wall" width="58" height="34" patternUnits="userSpaceOnUse">
+              <path d="M0 0h58v34H0Z" fill="#344c38"/><path d="M0 33h58M29 0v33" stroke="#2a3f30" stroke-width="1"/>
+            </pattern>
+            <clipPath id="${intro ? "intro" : "game"}-window"><rect x="22" y="89" width="169" height="236"/></clipPath>
+          </defs>
+          <rect width="800" height="480" fill="#1c3226"/>
+          <path d="M0 0h800v76H0Z" fill="#17291f"/>
+          <path d="M0 76h800v279H0Z" fill="url(#${intro ? "intro" : "game"}-wall)"/>
+          <path d="M0 355h800v125H0Z" fill="#71806a"/>
+          <path d="m0 389 800 0M0 429h800M80 355 15 480m142-125-25 125m110-125 12 125m75-125 55 125m32-125 96 125m-9-125 130 125m-44-125 177 125" stroke="#4b6150" stroke-width="1.5"/>
+          <rect x="21" y="22" width="756" height="11" rx="2" fill="#697b48"/>
+          <rect data-scene-light x="45" y="25" width="710" height="5" rx="2" fill="${lightColor}"/>
+          <path d="M45 33h710l35 42H8Z" fill="${lightColor}" opacity="${feedback ? ".12" : ".055"}"/>
+          <rect x="22" y="89" width="169" height="236" fill="#172f29" stroke="#87977c" stroke-width="4"/>
+          <g clip-path="url(#${intro ? "intro" : "game"}-window)">
+            <path d="M22 266h169v59H22Z" fill="#132c23"/>
+            <path d="M27 257V159h25v98Zm28 0V126h46v131Zm49 0V191h38v66Zm41 0V168h45v89Z" fill="#244034"/>
+            <path d="M60 140h7v5m13-5h7v5m-27 19h7v5m13-5h7v5m-26 31h7v5m48-2h7v5m21-21h7v5m16-24h7v5" stroke="#aeae69" stroke-width="3" opacity=".6"/>
+            <path d="M22 288h169" stroke="#6f8c73" stroke-width="2"/>
+            <path d="m27 302 76-1m-48 8 99-1m-89 10 61-1" stroke="#8d9982" opacity=".3"/>
+            <g transform="translate(24 89)"><g class="rain-streaks">${rain}<g transform="translate(0 70)">${rain}</g><g transform="translate(0 140)">${rain}</g><g transform="translate(0 210)">${rain}</g></g></g>
+          </g>
+          <path d="M108 89v236M22 248h169" stroke="#657f65" stroke-width="4"/>
+          <rect x="35" y="266" width="67" height="27" rx="2" fill="#2d3e2b" stroke="#8b9c68"/>
+          <text x="68" y="284" text-anchor="middle" font-size="13" fill="#cbdb91" font-family="monospace">OPEN</text>
+          <rect x="205" y="86" width="216" height="47" fill="#acbd61"/>
+          <text x="223" y="116" font-size="20" fill="#263b2b" font-family="monospace" font-weight="700">02:17 STORE</text>
+          <rect x="210" y="151" width="211" height="193" rx="2" fill="#243c2b" stroke="#6c8360" stroke-width="2"/>
+          <path d="M211 217h209m-209 73h209" stroke="#9da66b" stroke-width="5"/>
+          ${shelfProducts}
+          <path d="M224 223h28v8h-28Zm40 0h28v8h-28Zm40 0h28v8h-28Zm40 0h28v8h-28ZM224 296h28v8h-28Zm40 0h28v8h-28Zm40 0h28v8h-28Zm40 0h28v8h-28Z" fill="#d2d6a3"/>
+          <rect x="610" y="85" width="160" height="258" fill="#76947b" stroke="#223d2a" stroke-width="3"/>
+          <rect x="618" y="92" width="144" height="22" fill="#d6deb5"/>
+          <text x="690" y="108" text-anchor="middle" font-size="10" fill="#42644b" font-family="monospace">A LITTLE COOLER</text>
+          <rect x="620" y="121" width="139" height="208" fill="#314e3b"/>
+          ${[0, 1, 2].map((row) => `<g transform="translate(0 ${row * 61})"><path d="M620 176h139" stroke="#92a989" stroke-width="3"/>${[0, 1, 2, 3].map((col) => `<rect x="${631 + col * 29}" y="135" width="16" height="35" rx="3" fill="${["#c8d8b2", "#cc8c61", "#abbe6c", "#729a7e"][col]}"/><path d="M${634 + col * 29} 145h10" stroke="#e6e4c3" stroke-width="3"/>`).join("")}</g>`).join("")}
+          <path d="M690 121v208" stroke="#90a086" stroke-width="3"/><path d="M681 198v38m18-38v38" stroke="#d4dabc" stroke-width="3"/>
+          ${intro ? "" : customerDrawing(index, feedback)}
+          <path d="M0 361h372v119H0Z" fill="#2a4431"/><path d="M0 346h373v21H0Z" fill="#a2ae83"/><path d="M0 367h372" stroke="#152b1c" stroke-width="5"/>
+          <path d="M0 411h371m-371 33h371" stroke="#426047" stroke-width="2"/>
+          <rect x="227" y="295" width="105" height="44" rx="3" fill="#21382a" stroke="#839472" stroke-width="2"/>
+          <path d="m231 295 18-28h74l9 28Z" fill="#6a8262"/>
+          <rect x="254" y="273" width="59" height="17" rx="2" fill="#1d3525"/><text x="306" y="286" text-anchor="end" fill="#cddd8f" font-family="monospace" font-size="10">02:17</text>
+          <path d="M249 309h12m4 0h12m4 0h12m4 0h12m-60 8h12m4 0h12m4 0h12m4 0h12" stroke="#a5b88e" stroke-width="4"/>
+          <rect x="258" y="331" width="44" height="15" fill="#dadcc4"/><path d="M265 334h23m-23 5h18" stroke="#758a6a"/>
+          <rect x="35" y="248" width="53" height="98" rx="4" fill="#546e50" stroke="#1c3824" stroke-width="2"/>
+          <rect x="39" y="255" width="45" height="19" fill="#d7d9aa"/><text x="61" y="268" text-anchor="middle" font-size="8" fill="#425938" font-family="monospace">HOT COFFEE</text>
+          <rect x="47" y="283" width="29" height="37" fill="#253c29"/><path d="M57 288h9v7h-9Z" fill="#bfcb8d"/>
+          <path d="M52 303h18l-3 17H55Z" fill="#dedbbc"/><path d="M39 328h45" stroke="#253c29" stroke-width="3"/>
+          <path d="M103 346v-44h71v44" fill="#7b885f" stroke="#243b29" stroke-width="2"/><path d="M100 302h77v6h-77Z" fill="#ccd2a6"/>
+          <text x="138" y="332" text-anchor="middle" font-size="12" fill="#e4e5c3" font-family="monospace">HOT</text>
+          <rect x="728" y="365" width="72" height="71" fill="#384b31"/><path d="M741 367q-18-31 1-44m15 45q2-34 22-45m-8 44q29-19 22-44" fill="none" stroke="#749064" stroke-width="6"/>
+          <path d="M0 456h800v24H0Z" fill="#12241a" opacity=".15"/>
+        </svg>`;
+      }
+
+      function selectedProducts() {
+        return products.filter((product) => state.selectedProductIds.includes(product.id));
+      }
+
+      function startGame() {
+        state.screen = "game";
+        state.customerIndex = 0;
+        state.selectedProductIds = [];
+        state.roundScores = [];
+        state.receipt = [];
+        state.showFeedback = false;
+        state.lastFeedback = null;
+        render();
+        productGrid.querySelector("[data-product-card]")?.focus({ preventScroll: true });
+        playTone(340, .08);
+      }
+
+      function resetGame() {
+        state.screen = "intro";
+        state.customerIndex = 0;
+        state.selectedProductIds = [];
+        state.roundScores = [];
+        state.receipt = [];
+        state.showFeedback = false;
+        state.lastFeedback = null;
+        render();
+        startButton.focus({ preventScroll: true });
+      }
+
+      function renderCustomer() {
+        const customer = customers[state.customerIndex];
+        const feedback = state.showFeedback
+          ? `<div class="feedback" data-feedback>${state.lastFeedback}</div>
+             <button class="primary-button" type="button" data-action="continue">继续</button>`
+          : "";
+
+        customerPanel.innerHTML = `
+          <p class="customer-index">CUSTOMER ${String(state.customerIndex + 1).padStart(2, "0")}</p>
+          <h2 id="customer-name" tabindex="-1">${customer.name}</h2>
+          <p class="customer-role">${customer.role}</p>
+          <blockquote>${customer.line}</blockquote>
+          <p class="customer-observation" data-observation>${customer.observation}</p>
+          ${feedback}
+        `;
+      }
+
+      function renderStage() {
+        const customer = customers[state.customerIndex];
+        const stageTone = state.showFeedback ? responseLevel(state.roundScores.at(-1)) : "";
+        stage.dataset.tone = stageTone;
+        stage.innerHTML = `${sceneArtwork(state.customerIndex, state.showFeedback)}
+          <p class="scene-caption">${state.showFeedback ? "叮。新的一张小票，一点小小的心意。" : ["头盔没有摘下。他的下一单，还在等。", "一盏小灯没了电。她在有光的地方停下来。", "不是每个人，都急着在雨停后离开。"][state.customerIndex]}</p>`;
+      }
+
+      function renderProducts() {
+        const disabled = state.showFeedback;
+        productGrid.innerHTML = products.map((product) => {
+          const selected = state.selectedProductIds.includes(product.id);
+          const unavailable = !selected && state.selectedProductIds.length >= 3;
+          return `
+            <button class="product-card${selected ? " is-selected" : ""}" type="button"
+              data-product-card data-product-id="${product.id}"
+              aria-pressed="${selected}" ${disabled || unavailable ? "disabled" : ""}>
+              <span class="product-icon" aria-hidden="true">${productDrawing(product.id)}</span>
+              <span><span class="product-name">${product.name}</span><span class="product-description">${product.description}</span></span>
+              <svg class="selected-mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m9 12 2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
+            </button>
+          `;
+        }).join("");
+      }
+
+      function renderBag() {
+        const selected = selectedProducts();
+        bagCount.textContent = `${selected.length} / 3`;
+        submitButton.disabled = selected.length !== 3 || state.showFeedback;
+        bag.classList.toggle("empty", selected.length === 0);
+        bag.innerHTML = selected.length
+          ? `<div class="bag-list">${selected.map((product) => `<span class="bag-item">${productDrawing(product.id)}${product.name}</span>`).join("")}</div>`
+          : `<div class="bag-empty">还没有放入东西。</div>`;
+        document.querySelector("[data-action-hint]").textContent = state.showFeedback ? "心意已经递出去了。" : selected.length === 3 ? "这一袋，就这样。" : `还留着 ${3 - selected.length} 个位置。`;
+      }
+
+      function receiptMood(score) {
+        return score >= 2 ? "刚刚好" : score === 1 ? "有一点用" : "还在路上";
+      }
+
+      function renderReceipt() {
+        if (!state.receipt.length) {
+          receipt.innerHTML = `<div class="receipt-line"><span>这一晚还没有客人</span><strong>02:17</strong></div>`;
+          return;
+        }
+        receipt.innerHTML = state.receipt.map((entry) => {
+          const productNames = entry.productIds.map((id) => products.find((product) => product.id === id)?.name).join(" · ");
+          return `<div class="receipt-line"><span>${entry.customerName} · ${productNames}</span><strong>${receiptMood(entry.score)}</strong></div>`;
+        }).join("");
+      }
+
+      function renderEnding() {
+        const ending = endings[getEnding(state.roundScores)];
+        endingPanel.dataset.tone = ending.tone;
+        endingPanel.innerHTML = `
+          <div class="ending-copy-wrap">
+            <p class="eyebrow">NIGHT SHIFT / LAST RECEIPT</p>
+            <h1 id="ending-title">${ending.title}</h1>
+            <p class="ending-copy">${ending.copy}</p>
+            <button class="primary-button" type="button" data-action="restart">再来一晚</button>
+          </div>
+          <div class="ending-receipt">
+            <div class="receipt-title"><span>KEEP THE LIGHT ON</span><span>02:17</span></div>
+            <div class="receipt-list">
+              ${state.receipt.map((entry) => {
+                const names = entry.productIds.map((id) => products.find((product) => product.id === id)?.name).join(" · ");
+                return `<div class="receipt-line"><span>${entry.customerName}<br><small>${names}</small></span><strong>${receiptMood(entry.score)}</strong></div>`;
+              }).join("")}
+            </div>
+            <div class="status-bar"><span>这家店，暂时还没有关灯。</span><strong>3 位客人 / 3 袋心意</strong></div>
+          </div>
+        `;
+      }
+
+      function renderAudioButton() {
+        const label = state.audioUnavailable ? "声音：不可用" : state.audioEnabled ? "声音：开" : "声音：关";
+        audioButton.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="m11 5-6 4H2v6h3l6 4V5Z"/>
+          ${state.audioEnabled ? '<path d="M15.5 8.5a5 5 0 0 1 0 7m3-10a9 9 0 0 1 0 13"/>' : '<path d="m17 9 5 6m0-6-5 6"/>'}
+          </svg><span>${label}</span>`;
+        audioButton.title = state.audioUnavailable ? "浏览器暂不支持声音，仍可继续值班" : state.audioEnabled ? "关闭雨声与提示音" : "开启雨声与提示音";
+        audioButton.setAttribute("aria-label", label);
+        audioButton.setAttribute("aria-pressed", String(state.audioEnabled));
+      }
+
+      function render() {
+        app.dataset.screen = state.screen;
+        introPanel.hidden = state.screen !== "intro";
+        gamePanel.hidden = state.screen !== "game";
+        endingPanel.hidden = state.screen !== "ending";
+
+        if (state.screen === "game") {
+          progress.textContent = `${String(state.customerIndex + 1).padStart(2, "0")} / 03`;
+          renderCustomer();
+          renderStage();
+          renderProducts();
+          renderBag();
+          renderReceipt();
+        } else if (state.screen === "ending") {
+          renderEnding();
+        }
+        renderAudioButton();
+      }
+
+      function playTone(frequency, duration) {
+        if (!state.audioEnabled) return;
+        try {
+          audioContext ??= new AudioContext();
+          const oscillator = audioContext.createOscillator();
+          const gain = audioContext.createGain();
+          oscillator.type = "sine";
+          oscillator.frequency.value = frequency;
+          gain.gain.setValueAtTime(.0001, audioContext.currentTime);
+          gain.gain.exponentialRampToValueAtTime(.045, audioContext.currentTime + .015);
+          gain.gain.exponentialRampToValueAtTime(.0001, audioContext.currentTime + duration);
+          oscillator.connect(gain).connect(audioContext.destination);
+          oscillator.start();
+          oscillator.stop(audioContext.currentTime + duration + .02);
+        } catch {
+          state.audioEnabled = false;
+          state.audioUnavailable = true;
+          renderAudioButton();
+        }
+      }
+
+      let rainSource = null;
+      let ambienceGain = null;
+
+      function startAmbience() {
+        if (rainSource) return;
+        const buffer = audioContext.createBuffer(1, audioContext.sampleRate * 2, audioContext.sampleRate);
+        const samples = buffer.getChannelData(0);
+        for (let i = 0; i < samples.length; i += 1) samples[i] = Math.random() * 2 - 1;
+        rainSource = audioContext.createBufferSource();
+        rainSource.buffer = buffer;
+        rainSource.loop = true;
+        const filter = audioContext.createBiquadFilter();
+        filter.type = "lowpass";
+        filter.frequency.value = 1350;
+        ambienceGain = audioContext.createGain();
+        ambienceGain.gain.value = .018;
+        rainSource.connect(filter).connect(ambienceGain).connect(audioContext.destination);
+        rainSource.start();
+      }
+
+      function stopAmbience() {
+        rainSource?.stop();
+        rainSource?.disconnect();
+        ambienceGain?.disconnect();
+        rainSource = null;
+        ambienceGain = null;
+      }
+
+      async function setAudioEnabled(enabled) {
+        audioButton.disabled = true;
+        try {
+          if (enabled) {
+            audioContext ??= new AudioContext();
+            await audioContext.resume();
+            state.audioEnabled = true;
+            state.audioUnavailable = false;
+            startAmbience();
+            playTone(520, .09);
+          } else {
+            state.audioEnabled = false;
+            stopAmbience();
+          }
+        } catch {
+          state.audioEnabled = false;
+          state.audioUnavailable = true;
+          stopAmbience();
+          if (audioContext) {
+            await audioContext.close().catch(() => {});
+            audioContext = null;
+          }
+        } finally {
+          audioButton.disabled = false;
+          renderAudioButton();
+        }
+      }
+
+      startButton.addEventListener("click", startGame);
+      audioButton.addEventListener("click", () => setAudioEnabled(!state.audioEnabled));
+
+      productGrid.addEventListener("click", (event) => {
+        const card = event.target.closest("[data-product-card]");
+        if (!card || state.screen !== "game" || state.showFeedback) return;
+        const productId = card.dataset.productId;
+        const existingIndex = state.selectedProductIds.indexOf(productId);
+        if (existingIndex >= 0) {
+          state.selectedProductIds.splice(existingIndex, 1);
+        } else if (state.selectedProductIds.length < 3) {
+          state.selectedProductIds.push(productId);
+          playTone(280 + state.selectedProductIds.length * 70, .06);
+        }
+        render();
+        productGrid.querySelector(`[data-product-id="${productId}"]`)?.focus({ preventScroll: true });
+      });
+
+      submitButton.addEventListener("click", () => {
+        if (state.selectedProductIds.length !== 3 || state.showFeedback) return;
+        const customer = customers[state.customerIndex];
+        const score = scoreSelection(customer, state.selectedProductIds);
+        state.roundScores.push(score);
+        state.lastFeedback = customer.response[responseLevel(score)];
+        state.receipt.push({
+          customerName: customer.name,
+          productIds: [...state.selectedProductIds],
+          score
+        });
+        state.showFeedback = true;
+        playTone(score >= 2 ? 640 : score === 1 ? 430 : 250, .12);
+        render();
+        customerPanel.querySelector('[data-action="continue"]')?.focus();
+      });
+
+      customerPanel.addEventListener("click", (event) => {
+        const continueButton = event.target.closest('[data-action="continue"]');
+        if (!continueButton || !state.showFeedback) return;
+        state.showFeedback = false;
+        state.customerIndex += 1;
+        state.selectedProductIds = [];
+        state.lastFeedback = null;
+        state.screen = state.customerIndex >= customers.length ? "ending" : "game";
+        render();
+        if (state.screen === "ending") {
+          endingPanel.querySelector('[data-action="restart"]')?.focus({ preventScroll: true });
+        } else {
+          customerPanel.querySelector("#customer-name")?.focus();
+        }
+      });
+
+      endingPanel.addEventListener("click", (event) => {
+        if (event.target.closest('[data-action="restart"]')) resetGame();
+      });
+
+      document.addEventListener("visibilitychange", () => {
+        if (ambienceGain && audioContext) {
+          ambienceGain.gain.setTargetAtTime(document.hidden ? 0 : .018, audioContext.currentTime, .1);
+        }
+      });
+
+      document.querySelector("[data-intro-art]").innerHTML = sceneArtwork(0, false, true);
+      render();
+    })();
+  </script>
+</body>
+</html>

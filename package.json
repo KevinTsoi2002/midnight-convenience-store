@@ -1,0 +1,15 @@
+{
+  "name": "midnight-convenience-store",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A self-contained late-night convenience store narrative microgame.",
+  "scripts": {
+    "test": "node --test tests/midnight-convenience-store.spec.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "playwright": "1.64.0"
+  }
+}
