@@ -55,6 +55,23 @@ async function start(page) {
   await page.getByRole("button", { name: "开始值班", exact: true }).click();
 }
 
+async function startRun(page, seed = 20261009) {
+  await page.goto(`${htmlUrl}?seed=${seed}`);
+  await page.getByRole("button", { name: "开始新一局", exact: true }).click();
+}
+
+async function finishRunDay(page, expectedCount) {
+  assert.equal(await page.locator("[data-daily-customer]").count(), expectedCount);
+  await page.getByRole("button", { name: "开始营业", exact: true }).click();
+  for (let index = 0; index < expectedCount; index += 1) {
+    const ids = await page.locator("[data-product-card]:not([disabled])").evaluateAll((cards) => cards.slice(0, 3).map((card) => card.dataset.productId));
+    for (const id of ids) await page.locator(`[data-product-id="${id}"]`).click();
+    await page.getByRole("button", { name: "装袋", exact: true }).click();
+    await page.getByRole("button", { name: "继续", exact: true }).click();
+  }
+  assert.equal(await page.locator("[data-screen-panel=\"settlement\"]").isVisible(), true);
+}
+
 async function serve(page, ids) {
   for (const id of ids) {
     await page.locator(`[data-product-id="${id}"]`).click();
@@ -81,6 +98,48 @@ test("offline entry: complete intro and zero network dependencies", async () => 
     assert.equal(await page.locator("[data-product-card]").count(), 9);
     assert.deepEqual(networkRequests, []);
   });
+});
+
+test("roguelite: seeded three-day loop exposes events, settlement and trinkets", async () => {
+  await withPage(async (page) => {
+    await startRun(page);
+    const expectedClock = await page.evaluate(() => new Intl.DateTimeFormat("zh-CN", { hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date()));
+    assert.equal(await page.locator("[data-real-clock]").first().innerText(), expectedClock);
+    assert.equal(await page.locator("[data-run-day]").first().innerText(), "第 1 天");
+    assert.equal(await page.locator("[data-night-event]").isVisible(), true);
+    const firstCustomers = await page.locator("[data-daily-customer]").evaluateAll((nodes) => nodes.map((node) => node.dataset.customerId));
+    assert.equal(firstCustomers.length, 3);
+    await finishRunDay(page, 3);
+    assert.equal(await page.locator("[data-help-rate]").isVisible(), true);
+    await page.getByRole("button", { name: "继续到饰品", exact: true }).click();
+    assert.equal(await page.locator("[data-trinket-choice]").count(), 3);
+    await page.locator("[data-trinket-choice]").first().click();
+    assert.equal(await page.locator("[data-run-day]").first().innerText(), "第 2 天");
+    await finishRunDay(page, 4);
+    await page.getByRole("button", { name: "继续到饰品", exact: true }).click();
+    assert.equal(await page.locator("[data-trinket-choice]").count(), 3);
+    assert.match(await page.locator("[data-quality-range]").last().innerText(), /common|rare|epic|legendary|普通|稀有|史诗|传说/);
+    await page.locator("[data-trinket-choice]").first().click();
+    assert.equal(await page.locator("[data-run-day]").first().innerText(), "第 3 天");
+    await finishRunDay(page, 5);
+    await page.getByRole("button", { name: "查看今晚结局", exact: true }).click();
+    assert.equal(await page.locator('[data-screen-panel="ending"]').isVisible(), true);
+    assert.equal(await page.locator(".ending-receipt .receipt-line").count(), 12);
+  });
+});
+
+test("roguelite: mobile overlays stay within the viewport", async () => {
+  await withPage(async (page) => {
+    await startRun(page, 20261009);
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+    await finishRunDay(page, 3);
+    const settlement = await page.locator("[data-screen-panel=\"settlement\"]").boundingBox();
+    assert.equal(settlement.x >= 0 && settlement.x + settlement.width <= 390, true);
+    await page.getByRole("button", { name: "继续到饰品", exact: true }).click();
+    const reward = await page.locator("[data-screen-panel=\"trinket-reward\"]").boundingBox();
+    assert.equal(reward.x >= 0 && reward.x + reward.width <= 390, true);
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+  }, { viewport: { width: 390, height: 844 } });
 });
 
 test("selection: three-item limit, deselection and submission guard", async () => {

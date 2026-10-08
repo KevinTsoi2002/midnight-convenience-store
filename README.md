@@ -1,6 +1,6 @@
 # 凌晨 2:17 的便利店
 
-一款约 3～5 分钟的叙事微游戏。你是深夜便利店的店员，根据三位顾客的台词和状态，从货架上挑选三件商品，为他们装袋。
+一款约 5～8 分钟的叙事微游戏。你是深夜便利店的店员，根据顾客的台词和状态，从货架上挑选三件商品，为他们装袋。
 
 ## 试玩
 
@@ -10,7 +10,12 @@
 
 ## 作品内容
 
-- 三位顾客、九件商品、三种结局。
+- 保留原有的单晚模式：三位顾客、九件商品、三种结局。
+- 新增“开始新一局” Roguelite 模式：一局三天，每天分别面对 3、4、5 位随机顾客。
+- 每天有一个夜班事件，可能改变商品可用性、标签权重或隐藏需求；第 2 天开始会出现隐藏线索。
+- 每日结束会显示帮助率、隐藏需求命中和品质评分，并从三件饰品中选择一件。
+- 饰品背包最多 8 件，同时最多装备 3 件；不同饰品会形成温暖、光线、陪伴和风险等协同。
+- 现实时间会显示在开场、顶部状态栏和最终小票；叙事时钟仍固定为 02:17、03:06、04:12。
 - 顾客反馈、灯光变化和夜班小票随选择变化。
 - 内嵌 SVG 场景与商品插画，使用 Web Audio API 合成音效。
 - 支持桌面和移动端，以及键盘操作、减少动态效果和音频不可用时的降级。
@@ -28,7 +33,13 @@ npm test
 
 测试覆盖商品选择限制、顾客流程、三种结局、重玩、音频降级、键盘焦点、离线运行，以及 320～1440px 的响应式布局。测试截图写入 `output/playwright/`，不提交到仓库。
 
+固定种子可用于复现 Roguelite 流程，例如：
+
+```text
+midnight-convenience-store.html?seed=20261009
+```
+
 - 游戏文件：[`midnight-convenience-store.html`](midnight-convenience-store.html)
 - 回归测试：[`tests/midnight-convenience-store.spec.mjs`](tests/midnight-convenience-store.spec.mjs)
-- 设计规格：[`docs/superpowers/specs/2026-10-08-midnight-convenience-store-design.md`](docs/superpowers/specs/2026-10-08-midnight-convenience-store-design.md)
-- 实现计划与记录：[`docs/superpowers/plans/2026-10-08-midnight-convenience-store.md`](docs/superpowers/plans/2026-10-08-midnight-convenience-store.md)
+- 设计规格：[`docs/superpowers/specs/2026-10-09-midnight-convenience-store-roguelite-design.md`](docs/superpowers/specs/2026-10-09-midnight-convenience-store-roguelite-design.md)
+- 实现计划与记录：[`docs/superpowers/plans/2026-10-09-midnight-convenience-store-roguelite.md`](docs/superpowers/plans/2026-10-09-midnight-convenience-store-roguelite.md)

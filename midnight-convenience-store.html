@@ -718,6 +718,69 @@
 
     .status-bar strong { color: var(--lime-soft); font-weight: 600; }
 
+    .run-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin: 12px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .run-meta strong { color: var(--lime-soft); font-weight: 700; }
+
+    .secondary-button {
+      min-height: 44px;
+      margin-left: 10px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 0 16px;
+      background: transparent;
+      color: var(--lime-soft);
+      cursor: pointer;
+    }
+
+    .secondary-button:hover { border-color: var(--lime); background: rgba(184, 214, 90, .08); }
+
+    .run-overlay {
+      min-height: calc(100vh - 36px);
+      padding: clamp(28px, 7vw, 90px) clamp(12px, 8vw, 120px);
+    }
+
+    .overlay-card {
+      width: min(900px, 100%);
+      margin: 0 auto;
+      border: 1px solid var(--line);
+      padding: clamp(22px, 4vw, 42px);
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    .overlay-card h1 { margin-bottom: 14px; font-size: clamp(42px, 7vw, 72px); }
+    .overlay-copy { max-width: 640px; color: var(--muted); line-height: 1.75; }
+    .event-card { border-left: 2px solid var(--coral); margin: 22px 0; padding: 14px 16px; background: rgba(237, 118, 87, .08); }
+    .event-card strong { display: block; margin-bottom: 5px; color: var(--lime-soft); }
+    .daily-customer-list { display: flex; flex-wrap: wrap; gap: 8px; margin: 22px 0 28px; }
+    .daily-customer { border: 1px solid var(--line); padding: 8px 10px; background: rgba(22, 41, 42, .7); color: var(--cream); font-size: 12px; }
+    .settlement-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 22px 0; }
+    .settlement-stat { border-top: 1px solid var(--line); padding-top: 10px; color: var(--muted); font-size: 12px; }
+    .settlement-stat strong { display: block; margin-top: 4px; color: var(--lime-soft); font-size: 22px; }
+    .trinket-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 24px 0; }
+    .trinket-card { min-height: 178px; border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; background: rgba(22, 41, 42, .75); color: var(--cream); cursor: pointer; text-align: left; }
+    .trinket-card:hover, .trinket-card:focus-visible { border-color: var(--lime); background: rgba(184, 214, 90, .1); }
+    .trinket-card strong { display: block; margin: 8px 0; color: var(--lime-soft); font-family: Georgia, "Times New Roman", serif; font-size: 21px; font-weight: 400; }
+    .trinket-rarity { color: var(--coral); font-size: 11px; font-weight: 800; letter-spacing: .1em; }
+    .trinket-description { color: var(--muted); font-size: 12px; line-height: 1.55; }
+    .trinket-counts { display: flex; flex-wrap: wrap; gap: 16px; margin: 12px 0; color: var(--muted); font-size: 12px; }
+    .trinket-counts strong { color: var(--lime-soft); }
+    .trinket-summary { margin-top: 18px; color: var(--muted); font-size: 12px; }
+
+    @media (max-width: 680px) {
+      .secondary-button { margin: 10px 0 0; }
+      .settlement-stats, .trinket-grid { grid-template-columns: 1fr; }
+      .trinket-card { min-height: 142px; }
+    }
+
     @keyframes reveal {
       from { opacity: 0; transform: translateY(7px); }
       to { opacity: 1; transform: translateY(0); }
@@ -789,7 +852,8 @@
       padding: 150px 0 110px 48px;
       pointer-events: none;
     }
-    .intro-copy-wrap .primary-button { pointer-events: auto; }
+    .intro-copy-wrap .primary-button,
+    .intro-copy-wrap .secondary-button { pointer-events: auto; }
     .intro-copy { max-width: 310px; color: #ced8c9; font-size: 16px; }
     .intro-note { color: #afbeb2; }
     .intro-screen .store-preview {
@@ -951,6 +1015,8 @@
         <h1 id="game-title">凌晨 2:17<br>的便利店</h1>
         <p class="intro-copy">给今晚还没结束的人，装一袋刚刚好的东西。</p>
         <button class="primary-button" type="button" data-action="start">开始值班</button>
+        <button class="secondary-button" type="button" data-action="start-run">开始新一局</button>
+        <p class="run-meta"><span>现实时间 <strong data-real-clock>--:--</strong></span><span data-time-mood>夜班从一盏灯开始。</span></p>
         <p class="intro-note">门铃响了。今晚还有三位客人。</p>
       </div>
       <div class="store-preview" data-intro-art aria-label="荧光绿夜班便利店预览"></div>
@@ -961,6 +1027,8 @@
         <div class="topbar-meta">
           <span class="topbar-clock" data-clock>02:17</span>
           <span data-customer-progress>01 / 03</span>
+          <span data-run-day>单晚</span>
+          <span>现实 <strong data-real-clock>--:--</strong></span>
         </div>
       </header>
 
@@ -1001,6 +1069,18 @@
       </section>
     </section>
 
+    <section class="run-overlay" data-screen-panel="day-intro" hidden aria-labelledby="day-intro-title">
+      <div class="overlay-card" data-day-intro></div>
+    </section>
+
+    <section class="run-overlay" data-screen-panel="settlement" hidden aria-labelledby="settlement-title">
+      <div class="overlay-card" aria-live="polite"></div>
+    </section>
+
+    <section class="run-overlay" data-screen-panel="trinket-reward" hidden aria-labelledby="trinket-title">
+      <div class="overlay-card" aria-live="polite"></div>
+    </section>
+
     <section class="ending-screen" data-screen-panel="ending" hidden aria-labelledby="ending-title"></section>
   </main>
 
@@ -1026,6 +1106,7 @@
           line: "还有一单。手有点冷。",
           observation: "他揉了揉冻红的指节。头盔没有摘，手机又亮了一次。",
           needs: ["warmth", "energy"],
+          hiddenNeeds: ["comfort"],
           response: {
             high: "他把袋子接过去，掌心终于有了一点热度，肩膀也松了一下。",
             mid: "他点点头，说了声谢谢，又看向门外。",
@@ -1039,6 +1120,7 @@
           line: "我不饿，只想买点能带走的光。",
           observation: "书包上挂着一盏没电的小灯。她的目光，停在杂志上的那片星空。",
           needs: ["light", "company"],
+          hiddenNeeds: ["comfort"],
           response: {
             high: "她把电池放进口袋，像是终于有了一盏备用的小灯。",
             mid: "她在货架前多站了一会儿，然后轻轻挥了挥手。",
@@ -1052,12 +1134,57 @@
           line: "雨停了我就走。",
           observation: "肩上落着雨，胃里响了一声。他看了看窗边那张空着的椅子。",
           needs: ["comfort", "company"],
+          hiddenNeeds: ["warmth"],
           response: {
             high: "他在靠窗的位置坐下，雨声变得没有那么远了。",
             mid: "他看了看雨幕，说：“这里挺亮的。”",
             low: "他站在门边，像是在等一句还没有说出口的话。"
           }
+        },
+        {
+          id: "linjie", name: "林姐", role: "护士", line: "我只剩十分钟，能不能帮我省一点心？", observation: "她把工牌翻到背面，眼睛还停在下一班车的时间上。", needs: ["energy", "practical"], hiddenNeeds: ["company"], response: { high: "她终于把肩膀放下来一点，说这次可以慢慢走。", mid: "她把东西收好，向门外的夜色点了点头。", low: "她看了一眼时间，又匆匆推门离开。" }
+        },
+        {
+          id: "laochen", name: "老陈", role: "修理工", line: "灯坏了不要紧，人别跟着灭。", observation: "他的手套上沾着机油，口袋里露出一截旧电线。", needs: ["light", "practical"], hiddenNeeds: ["warmth"], response: { high: "他笑了一下，说这盏灯还能再亮很久。", mid: "他把东西揣进兜里，留下一个像焊点一样的笑。", low: "他看着天花板的灯管，没再说话。" }
+        },
+        {
+          id: "earbuds", name: "戴耳机的人", role: "夜班乘客", line: "歌停了，外面就太安静了。", observation: "耳机线缠在袖口，他没有摘下来，只把音量调低。", needs: ["energy", "company"], hiddenNeeds: ["comfort"], response: { high: "他摘下一只耳机，第一次听见了店里的雨声。", mid: "他朝你比了个手势，像是在说收到了。", low: "他重新戴好耳机，把自己放回安静里。" }
+        },
+        {
+          id: "repairer", name: "维修工", role: "凌晨值班", line: "工具在，事情就还有办法。", observation: "他的工具箱磕掉了一个角，手腕上有一圈白色胶带。", needs: ["practical", "warmth"], hiddenNeeds: ["energy"], response: { high: "他掂了掂袋子，说今晚的故障可以慢一点修。", mid: "他认真道谢，转身时工具箱没有再响。", low: "他点头离开，脚步还是很快。" }
+        },
+        {
+          id: "courier-boss", name: "快递站老板", role: "还没下班", line: "最后一班车，总要有人等。", observation: "他把收件单折成很小一张，像是怕风把它吹走。", needs: ["company", "energy"], hiddenNeeds: ["practical"], response: { high: "他把那张收件单展开，说这次不会弄丢了。", mid: "他收下袋子，门外的车灯正好亮起来。", low: "他朝街角看了很久，才想起要离开。" }
+        },
+        {
+          id: "father-son", name: "小男孩和爸爸", role: "找回家的路", line: "爸爸，店里为什么一直亮着？", observation: "小男孩抱着一只纸箱，爸爸的手一直护在他肩上。", needs: ["comfort", "company"], hiddenNeeds: ["light"], response: { high: "小男孩把一束光揣进怀里，爸爸向你点头。", mid: "他们在门口停了一会儿，才一起走进雨里。", low: "爸爸牵紧他的手，灯影慢慢缩小。" }
         }
+      ];
+
+      const trinkets = [
+        { id: "old-coin", name: "旧硬币", rarity: "common", tags: ["practical"], description: "每轮第一次低分时，额外保留一点体面。", effect: { lowFloor: 1 } },
+        { id: "warm-bulb", name: "暖黄灯泡", rarity: "common", tags: ["warmth", "light"], description: "命中温暖或光线时，结算分 +1。", effect: { tags: ["warmth", "light"], bonus: 1 } },
+        { id: "staff-scarf", name: "店员围巾", rarity: "common", tags: ["warmth", "company"], description: "连续两次帮助到人后，下一轮获得一点温度。", effect: { streakBonus: 1 } },
+        { id: "rain-note", name: "雨夜便签", rarity: "rare", tags: ["clarity", "company"], description: "看见隐藏需求时，额外记住一分。", effect: { hiddenBonus: 1 } },
+        { id: "mint-candy", name: "不合时宜的薄荷糖", rarity: "rare", tags: ["energy", "risk"], description: "每轮可把一个模糊选择变成清醒的选择。", effect: { tags: ["energy"], bonus: 1 } },
+        { id: "old-badge", name: "旧店员名牌", rarity: "rare", tags: ["company", "clarity"], description: "顾客不说出口的那部分，也值得被听见。", effect: { hiddenBonus: 1 } },
+        { id: "glowing-key", name: "会发光的钥匙", rarity: "epic", tags: ["light", "clarity"], description: "每个夜晚第一次命中隐藏需求时，再加一分。", effect: { hiddenBonus: 2 } },
+        { id: "receipt-stapler", name: "银色票据夹", rarity: "common", tags: ["practical"], description: "三天结算时，最佳连击额外计入品质。", effect: { streakBonus: 1 } },
+        { id: "thermos", name: "值班保温杯", rarity: "rare", tags: ["warmth", "comfort"], description: "温暖与安慰同时命中时，分数更稳定。", effect: { synergy: ["warmth", "comfort"], bonus: 1 } },
+        { id: "blue-earbuds", name: "蓝色耳机", rarity: "epic", tags: ["energy", "company"], description: "风险路线成功时，下一位顾客耐心增加。", effect: { synergy: ["risk", "energy"], bonus: 1 } },
+        { id: "night-map", name: "凌晨地图", rarity: "epic", tags: ["clarity", "practical"], description: "第 3 天线索不会减少。", effect: { clearDayThree: true } },
+        { id: "shared-key", name: "两把钥匙", rarity: "legendary", tags: ["light", "company"], description: "光与陪伴形成协同时，结局更容易被点亮。", effect: { synergy: ["light", "company"], bonus: 2 } },
+        { id: "red-thread", name: "红线头", rarity: "legendary", tags: ["risk", "clarity"], description: "低分不会打断连击，但波动会更明显。", effect: { volatile: true } },
+        { id: "window-seat", name: "窗边座位牌", rarity: "rare", tags: ["comfort", "company"], description: "安慰与陪伴同时命中时，额外获得一点分数。", effect: { synergy: ["comfort", "company"], bonus: 1 } }
+      ];
+
+      const dailyEvents = [
+        { id: "rain", name: "雨势突然变大", description: "门口的伞只剩最后几把，大家都在看向窗外。", blockedProductIds: [], tagWeights: { comfort: 1.2, practical: 1.15 }, hiddenNeedSubstitute: "comfort", bonus: 1 },
+        { id: "freezer", name: "冰柜短暂断电", description: "冷藏区的灯灭了，蜂蜜牛奶和热食暂时不能取。", blockedProductIds: ["milk", "hot-food"], tagWeights: { light: 1.2 }, hiddenNeedSubstitute: "light", bonus: 1 },
+        { id: "radio", name: "收音机播报寻猫", description: "一只灰猫走失，广播声在店里绕了两圈。", blockedProductIds: [], tagWeights: { company: 1.2 }, hiddenNeedSubstitute: "company", bonus: 1 },
+        { id: "single-light", name: "只剩一盏灯亮着", description: "招牌忽明忽暗，电池和陪伴突然都变得重要。", blockedProductIds: [], tagWeights: { light: 1.3 }, hiddenNeedSubstitute: "light", bonus: 1 },
+        { id: "returning", name: "熟客又回来了", description: "有人记得你昨晚递出的那袋东西。", blockedProductIds: [], tagWeights: { company: 1.15, comfort: 1.1 }, hiddenNeedSubstitute: "company", bonus: 1 },
+        { id: "delivery-rush", name: "配送高峰提前到来", description: "门铃连续响了三次，效率和能量都不能少。", blockedProductIds: [], tagWeights: { energy: 1.2, practical: 1.15 }, hiddenNeedSubstitute: "energy", bonus: 1 }
       ];
 
       const endings = {
@@ -1080,6 +1207,24 @@
 
       const state = {
         screen: "intro",
+        mode: "legacy",
+        day: 1,
+        maxDays: 3,
+        dailyCustomers: [],
+        currentEvent: null,
+        dailyScores: [],
+        dailyEntries: [],
+        runReceipt: [],
+        inventory: [],
+        equippedTrinkets: [],
+        trinketChoices: [],
+        hiddenNeedHits: 0,
+        dailyHiddenNeedHits: 0,
+        streak: 0,
+        dailyBestStreak: 0,
+        runSeed: 0,
+        realClock: getRealClock(),
+        gameClock: "02:17",
         customerIndex: 0,
         selectedProductIds: [],
         roundScores: [],
@@ -1095,6 +1240,9 @@
       const app = document.querySelector("#app");
       const introPanel = document.querySelector('[data-screen-panel="intro"]');
       const gamePanel = document.querySelector('[data-screen-panel="game"]');
+      const dayIntroPanel = document.querySelector('[data-screen-panel="day-intro"]');
+      const settlementPanel = document.querySelector('[data-screen-panel="settlement"]');
+      const trinketPanel = document.querySelector('[data-screen-panel="trinket-reward"]');
       const endingPanel = document.querySelector('[data-screen-panel="ending"]');
       const customerPanel = document.querySelector("[data-customer-panel]");
       const stage = document.querySelector("[data-store-stage]");
@@ -1106,14 +1254,86 @@
       const progress = document.querySelector("[data-customer-progress]");
       const audioButton = document.querySelector('[data-action="toggle-audio"]');
       const startButton = document.querySelector('[data-action="start"]');
+      const startRunButton = document.querySelector('[data-action="start-run"]');
 
-      function scoreSelection(customer, selectedIds) {
+      function createSeededRandom(seed) {
+        let value = seed >>> 0;
+        return () => {
+          value = (value * 1664525 + 1013904223) >>> 0;
+          return value / 4294967296;
+        };
+      }
+
+      function getSeedFromUrl() {
+        const parsed = Number.parseInt(new URLSearchParams(location.search).get("seed") ?? "", 10);
+        return Number.isFinite(parsed) ? parsed >>> 0 : (Date.now() >>> 0);
+      }
+
+      function getRealClock(date = new Date()) {
+        return new Intl.DateTimeFormat("zh-CN", { hour: "2-digit", minute: "2-digit", hour12: false }).format(date);
+      }
+
+      function getNightClock(day) { return ["02:17", "03:06", "04:12"][day - 1] ?? "04:12"; }
+
+      function getTimeMood(hour = Number(getRealClock().slice(0, 2))) {
+        if (hour < 6) return "这个时间，只有还没睡的人知道。";
+        if (hour < 12) return "城市醒了，昨晚的事还没有完全结束。";
+        if (hour < 18) return "白天也有人把心事带进便利店。";
+        return "夜班还没有开始，但灯已经提前亮了。";
+      }
+
+      function getDifficulty(day) {
+        return { customerCount: [3, 4, 5][day - 1] ?? 5, hiddenNeeds: day >= 2, reducedClues: day >= 3, patiencePenalty: Math.max(0, day - 1) };
+      }
+
+      function buildDailyCustomers(day, seed, previousIds = []) {
+        const random = createSeededRandom(seed + day * 7919);
+        const count = getDifficulty(day).customerCount;
+        const eligible = customers.map((customer) => ({ customer, weight: previousIds.includes(customer.id) ? .45 : 1 }));
+        const chosen = [];
+        while (chosen.length < count && eligible.length) {
+          const index = Math.floor(random() * eligible.length);
+          chosen.push(eligible.splice(index, 1)[0].customer);
+        }
+        return chosen;
+      }
+
+      function getDailyEvent(day, seed) {
+        return dailyEvents[Math.floor(createSeededRandom(seed + day * 3571)() * dailyEvents.length)];
+      }
+
+      function getTrinketModifiers(trinketIds, context) {
+        return trinketIds
+          .map((id) => trinkets.find((trinket) => trinket.id === id))
+          .filter(Boolean)
+          .reduce((result, trinket) => {
+            const effect = trinket.effect;
+            if (effect.tags?.some((tag) => context.selectedTags.has(tag))) result.scoreBonus += effect.bonus ?? 0;
+            if (effect.synergy?.every((tag) => context.selectedTags.has(tag))) {
+              result.scoreBonus += effect.bonus ?? 0;
+              result.hasSynergy = true;
+            }
+            if (effect.hiddenBonus && context.hiddenNeedHit) result.scoreBonus += effect.hiddenBonus;
+            if (effect.lowFloor) result.lowFloor = Math.max(result.lowFloor, effect.lowFloor);
+            if (effect.volatile) result.volatile = true;
+            return result;
+          }, { scoreBonus: 0, lowFloor: 0, hasSynergy: false, volatile: false });
+      }
+
+      function scoreSelection(customer, selectedIds, trinketIds = state.equippedTrinkets, event = null, day = state.day) {
         const selectedTags = new Set(
           products
             .filter((product) => selectedIds.includes(product.id))
             .flatMap((product) => product.tags)
         );
-        return customer.needs.reduce((score, need) => score + (selectedTags.has(need) ? 1 : 0), 0);
+        const tagWeights = event?.tagWeights ?? {};
+        const visibleScore = customer.needs.reduce((score, need) => score + (selectedTags.has(need) ? (tagWeights[need] ?? 1) : 0), 0);
+        const hiddenScore = day >= 2 ? customer.hiddenNeeds.reduce((score, need) => score + (selectedTags.has(need) ? 1 : 0), 0) : 0;
+        const hiddenNeedHit = hiddenScore > 0 || Boolean(event?.hiddenNeedSubstitute && selectedTags.has(event.hiddenNeedSubstitute));
+        const modifiers = getTrinketModifiers(trinketIds, { customer, selectedTags, day, hiddenNeedHit });
+        let score = Math.min(3, Math.max(0, Math.round(visibleScore + hiddenScore + modifiers.scoreBonus)));
+        if (score === 0 && modifiers.lowFloor) score = modifiers.lowFloor;
+        return { score, visibleScore, hiddenNeedHit, hasSynergy: modifiers.hasSynergy, volatile: modifiers.volatile, responseLevel: responseLevel(score) };
       }
 
       function responseLevel(score) {
@@ -1152,6 +1372,8 @@
       }
 
       function customerDrawing(index, feedback) {
+        const activeCustomer = currentCustomers()[index] ?? customers[index % customers.length];
+        const artIndex = index % 3;
         const details = [
           `<path d="M25 57Q17 27 51 25q33 2 25 32" fill="#b9ce72" stroke="#263b2c" stroke-width="3"/>
             <path d="M26 48h49v10H26Z" fill="#e1e5c0"/><path d="m22 101 32-8 24 11-6 88H27Z" fill="#a9bf67"/>
@@ -1171,17 +1393,17 @@
           <path d="m46 79 7 2 7-2" fill="none" stroke="#9a6f52" stroke-width="1.8" stroke-linecap="round"/>
           <path d="M39 65h6m13 0h6" stroke="#364636" stroke-width="2" stroke-linecap="round"/>
           <path d="M48 87h10v15H48Z" fill="#c5a080"/>
-          ${index === 1 ? '<path d="M27 57q0-31 25-31t25 31L62 45l-12 7-10-6Z" fill="#273b2e"/>' : ""}
+          ${artIndex === 1 ? '<path d="M27 57q0-31 25-31t25 31L62 45l-12 7-10-6Z" fill="#273b2e"/>' : ""}
         </g>`;
-        return `<g data-scene-customer="${customers[index].id}" transform="translate(435 131) scale(1.1)"><g class="scene-person-art">
+        return `<g data-scene-customer="${activeCustomer.id}" transform="translate(435 131) scale(1.1)"><g class="scene-person-art">
           <ellipse cx="53" cy="202" rx="50" ry="8" fill="#0c1b15" opacity=".5"/>
           <path d="M30 175h20l-3 33H28Zm27 0h21l5 33H60Z" fill="#253b2e"/>
           <path d="M27 208h21v6H24Zm32 0h25l5 6H59Z" fill="#1b2d23"/>
-          ${index !== 1 ? face : ""}
-          ${details[index]}
+          ${artIndex !== 1 ? face : ""}
+          ${details[artIndex]}
           <path d="m29 ${handPosition} 11-3 4 10-12 5Zm34 0 10 3-2 11-13-4Z" fill="#d8b28b"/>
           ${feedback ? `<g data-scene-bag><path d="M39 163h25l-2 27H40Z" fill="#d9dfb4"/><path d="M44 163v-8q0-8 7-8t7 8v8" fill="none" stroke="#c4cda1" stroke-width="2"/><circle cx="51" cy="176" r="5" fill="#a1b55c"/></g>` : ""}
-          ${index === 1 ? face : ""}
+          ${artIndex === 1 ? face : ""}
         </g></g>`;
       }
 
@@ -1198,7 +1420,8 @@
         const rain = Array.from({ length: 16 }, (_, i) =>
           `<path d="m${22 + i * 13} ${-15 + (i % 3) * 16}-12 26" fill="none" stroke="#98b6a0" stroke-width="1" opacity=".45"/>`
         ).join("");
-        return `<svg class="scene-art" viewBox="0 0 800 480" role="img" aria-label="${intro ? "凌晨仍亮着灯的便利店，窗外下着雨" : `${customers[index].name}来到便利店的收银台前`}">
+        const activeCustomer = currentCustomers()[index] ?? customers[index % customers.length];
+        return `<svg class="scene-art" viewBox="0 0 800 480" role="img" aria-label="${intro ? "凌晨仍亮着灯的便利店，窗外下着雨" : `${activeCustomer.name}来到便利店的收银台前`}">
           <defs>
             <pattern id="${intro ? "intro" : "game"}-wall" width="58" height="34" patternUnits="userSpaceOnUse">
               <path d="M0 0h58v34H0Z" fill="#344c38"/><path d="M0 33h58M29 0v33" stroke="#2a3f30" stroke-width="1"/>
@@ -1260,7 +1483,133 @@
         return products.filter((product) => state.selectedProductIds.includes(product.id));
       }
 
+      function currentCustomers() {
+        return state.mode === "roguelite" ? state.dailyCustomers : customers.slice(0, 3);
+      }
+
+      function getDailySettlement(day, scores = state.dailyScores, entries = state.dailyEntries, event = state.currentEvent) {
+        const average = scores.length ? scores.reduce((sum, score) => sum + score, 0) / scores.length : 0;
+        const helpRate = Math.round((scores.filter((score) => score >= 2).length / Math.max(1, scores.length)) * 100);
+        const hiddenNeedHits = entries.filter((entry) => entry.hiddenNeedHit).length;
+        const bestStreak = entries.reduce((best, entry, index) => Math.max(best, entries.slice(0, index + 1).slice(-3).filter((item) => item.score >= 2).length), 0);
+        return { average, helpRate, hiddenNeedHits, bestStreak, qualityScore: Math.round(day + average + hiddenNeedHits + bestStreak + (event?.bonus ?? 0)) };
+      }
+
+      function getTrinketQuality(settlement, day) {
+        if (day === 3 && settlement.qualityScore >= 8) return ["rare", "epic", "legendary"];
+        if (settlement.qualityScore >= 8) return ["rare", "epic"];
+        if (settlement.qualityScore >= 6) return ["rare"];
+        if (settlement.qualityScore >= 3) return ["common", "rare"];
+        return ["common"];
+      }
+
+      function rarityLabel(rarity) {
+        return { common: "普通", rare: "稀有", epic: "史诗", legendary: "传说" }[rarity] ?? rarity;
+      }
+
+      function createTrinketChoices() {
+        const settlement = getDailySettlement(state.day);
+        const qualities = getTrinketQuality(settlement, state.day);
+        const available = trinkets.filter((trinket) => !state.inventory.includes(trinket.id));
+        const random = createSeededRandom(state.runSeed + state.day * 104729 + state.dailyScores.length);
+        const choices = [];
+        const preferred = available.filter((trinket) => qualities.includes(trinket.rarity));
+        while (choices.length < 3 && preferred.length) choices.push(preferred.splice(Math.floor(random() * preferred.length), 1)[0]);
+        while (choices.length < 3 && available.length) choices.push(available.splice(Math.floor(random() * available.length), 1)[0]);
+        return choices;
+      }
+
+      function startRun() {
+        state.mode = "roguelite";
+        state.runSeed = getSeedFromUrl();
+        state.day = 1;
+        state.inventory = [];
+        state.equippedTrinkets = [];
+        state.dailyScores = [];
+        state.dailyEntries = [];
+        state.runReceipt = [];
+        state.hiddenNeedHits = 0;
+        state.dailyHiddenNeedHits = 0;
+        state.streak = 0;
+        state.dailyBestStreak = 0;
+        state.dailyCustomers = buildDailyCustomers(1, state.runSeed);
+        state.currentEvent = getDailyEvent(1, state.runSeed);
+        state.gameClock = getNightClock(1);
+        state.screen = "day-intro";
+        state.realClock = getRealClock();
+        render();
+        dayIntroPanel.querySelector('[data-action="begin-day"]')?.focus({ preventScroll: true });
+      }
+
+      function beginDay() {
+        state.screen = "game";
+        state.customerIndex = 0;
+        state.selectedProductIds = [];
+        state.roundScores = [];
+        state.receipt = [];
+        state.dailyScores = [];
+        state.dailyEntries = [];
+        state.trinketChoices = [];
+        state.dailyHiddenNeedHits = 0;
+        state.streak = 0;
+        state.showFeedback = false;
+        state.lastFeedback = null;
+        render();
+        productGrid.querySelector("[data-product-card]:not([disabled])")?.focus({ preventScroll: true });
+      }
+
+      function chooseTrinket(id) {
+        if (state.inventory.length >= 8 || state.inventory.includes(id)) return;
+        state.inventory.push(id);
+        if (state.equippedTrinkets.length < 3) state.equippedTrinkets.push(id);
+        if (state.day < state.maxDays) {
+          state.day += 1;
+          state.dailyCustomers = buildDailyCustomers(state.day, state.runSeed, state.dailyCustomers.map((customer) => customer.id));
+          state.currentEvent = getDailyEvent(state.day, state.runSeed);
+          state.gameClock = getNightClock(state.day);
+          state.screen = "day-intro";
+        } else {
+          state.screen = "ending";
+        }
+        render();
+        const focusTarget = state.screen === "day-intro" ? '[data-action="begin-day"]' : '[data-action="restart"]';
+        document.querySelector(focusTarget)?.focus({ preventScroll: true });
+      }
+
+      function renderDayIntro() {
+        const event = state.currentEvent;
+        dayIntroPanel.innerHTML = `<div class="overlay-card" data-day-intro-content>
+          <p class="eyebrow">NIGHT SHIFT / DAY ${state.day}</p>
+          <h1 id="day-intro-title">第 ${state.day} 天</h1>
+          <p class="overlay-copy">叙事时间 ${state.gameClock}。现实时间 <strong data-real-clock>${state.realClock}</strong>。今晚的顾客不会完全按照昨天的样子出现。</p>
+          <div class="event-card" data-night-event><strong>${event.name}</strong><span>${event.description}</span></div>
+          <div class="daily-customer-list" data-customer-count="${state.dailyCustomers.length}">${state.dailyCustomers.map((customer) => `<span class="daily-customer" data-daily-customer data-customer-id="${customer.id}">${customer.name}</span>`).join("")}</div>
+          <p class="trinket-summary">装备：${state.equippedTrinkets.length ? state.equippedTrinkets.map((id) => trinkets.find((item) => item.id === id)?.name).join(" · ") : "还没有饰品"}</p>
+          <button class="primary-button" type="button" data-action="begin-day">开始营业</button>
+        </div>`;
+      }
+
+      function renderSettlement() {
+        const settlement = getDailySettlement(state.day);
+        const finalDay = state.day === state.maxDays;
+        settlementPanel.innerHTML = `<div class="overlay-card" data-settlement>
+          <p class="eyebrow">DAILY SETTLEMENT / DAY ${state.day}</p>
+          <h1 id="settlement-title">今晚留下了什么</h1>
+          <p class="overlay-copy">你没有解决所有人的夜晚，但可以看看这一天的灯有没有更稳。</p>
+          <div class="settlement-stats"><div class="settlement-stat">帮助率<strong data-help-rate>${settlement.helpRate}%</strong></div><div class="settlement-stat">隐藏需求<strong data-hidden-hit-count>${settlement.hiddenNeedHits}</strong></div><div class="settlement-stat">平均分<strong>${settlement.average.toFixed(1)}</strong></div><div class="settlement-stat">品质分<strong>${settlement.qualityScore}</strong></div></div>
+          <p data-quality-range class="overlay-copy">${finalDay ? "三天的最后一张小票已经打印。" : `下一件饰品可能为：${getTrinketQuality(settlement, state.day).map(rarityLabel).join(" / ")}`}</p>
+          <button class="primary-button" type="button" data-action="continue-to-trinkets">${finalDay ? "查看今晚结局" : "继续到饰品"}</button>
+        </div>`;
+      }
+
+      function renderTrinketReward() {
+        const settlement = getDailySettlement(state.day);
+        state.trinketChoices = state.trinketChoices.length ? state.trinketChoices : createTrinketChoices();
+        trinketPanel.innerHTML = `<div class="overlay-card" data-trinket-reward><p class="eyebrow">A SMALL THING TO KEEP</p><h1 id="trinket-title">选一件带走</h1><p class="overlay-copy">品质区间：<span data-quality-range>${getTrinketQuality(settlement, state.day).map(rarityLabel).join(" / ")}</span>。饰品会改变接下来几晚的判断方式。</p><div class="trinket-counts"><span>背包 <strong data-inventory-count>${state.inventory.length} / 8</strong></span><span>装备 <strong data-equipped-count>${state.equippedTrinkets.length} / 3</strong></span></div><div class="trinket-grid">${state.trinketChoices.map((trinket) => `<button class="trinket-card" type="button" data-trinket-choice data-trinket-id="${trinket.id}" data-action="choose-trinket"><span class="trinket-rarity">${rarityLabel(trinket.rarity)}</span><strong>${trinket.name}</strong><span class="trinket-description">${trinket.description}</span></button>`).join("")}</div></div>`;
+      }
+
       function startGame() {
+        state.mode = "legacy";
         state.screen = "game";
         state.customerIndex = 0;
         state.selectedProductIds = [];
@@ -1268,6 +1617,9 @@
         state.receipt = [];
         state.showFeedback = false;
         state.lastFeedback = null;
+        state.day = 1;
+        state.gameClock = "02:17";
+        state.realClock = getRealClock();
         render();
         productGrid.querySelector("[data-product-card]")?.focus({ preventScroll: true });
         playTone(340, .08);
@@ -1275,21 +1627,32 @@
 
       function resetGame() {
         state.screen = "intro";
+        state.mode = "legacy";
+        state.day = 1;
+        state.inventory = [];
+        state.equippedTrinkets = [];
+        state.dailyCustomers = [];
+        state.currentEvent = null;
+        state.trinketChoices = [];
         state.customerIndex = 0;
         state.selectedProductIds = [];
         state.roundScores = [];
         state.receipt = [];
         state.showFeedback = false;
         state.lastFeedback = null;
+        state.realClock = getRealClock();
         render();
         startButton.focus({ preventScroll: true });
       }
 
       function renderCustomer() {
-        const customer = customers[state.customerIndex];
+        const customer = currentCustomers()[state.customerIndex];
         const feedback = state.showFeedback
           ? `<div class="feedback" data-feedback>${state.lastFeedback}</div>
              <button class="primary-button" type="button" data-action="continue">继续</button>`
+          : "";
+        const hiddenClue = state.mode === "roguelite" && state.day >= 2 && !state.showFeedback
+          ? `<p class="customer-hint" data-hidden-clue>隐藏线索：${state.day >= 3 ? "他没有说出口的那句话，被雨声盖住了一半。" : customer.observation}</p>`
           : "";
 
         customerPanel.innerHTML = `
@@ -1298,12 +1661,13 @@
           <p class="customer-role">${customer.role}</p>
           <blockquote>${customer.line}</blockquote>
           <p class="customer-observation" data-observation>${customer.observation}</p>
+          ${hiddenClue}
           ${feedback}
         `;
       }
 
       function renderStage() {
-        const customer = customers[state.customerIndex];
+        const customer = currentCustomers()[state.customerIndex];
         const stageTone = state.showFeedback ? responseLevel(state.roundScores.at(-1)) : "";
         stage.dataset.tone = stageTone;
         stage.innerHTML = `${sceneArtwork(state.customerIndex, state.showFeedback)}
@@ -1312,15 +1676,17 @@
 
       function renderProducts() {
         const disabled = state.showFeedback;
+        const blocked = new Set(state.mode === "roguelite" ? (state.currentEvent?.blockedProductIds ?? []) : []);
         productGrid.innerHTML = products.map((product) => {
           const selected = state.selectedProductIds.includes(product.id);
           const unavailable = !selected && state.selectedProductIds.length >= 3;
+          const eventBlocked = blocked.has(product.id);
           return `
             <button class="product-card${selected ? " is-selected" : ""}" type="button"
               data-product-card data-product-id="${product.id}"
-              aria-pressed="${selected}" ${disabled || unavailable ? "disabled" : ""}>
+              aria-pressed="${selected}" ${disabled || unavailable || eventBlocked ? "disabled" : ""}>
               <span class="product-icon" aria-hidden="true">${productDrawing(product.id)}</span>
-              <span><span class="product-name">${product.name}</span><span class="product-description">${product.description}</span></span>
+              <span><span class="product-name">${product.name}</span><span class="product-description">${eventBlocked ? "暂时不可取" : product.description}</span></span>
               <svg class="selected-mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m9 12 2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
             </button>
           `;
@@ -1354,24 +1720,37 @@
       }
 
       function renderEnding() {
-        const ending = endings[getEnding(state.roundScores)];
+        const runScores = state.mode === "roguelite" ? state.dailyEntries.map((entry) => entry.score) : state.roundScores;
+        const runTotal = state.mode === "roguelite" ? state.runReceipt.reduce((sum, entry) => sum + entry.score, 0) : runScores.reduce((sum, score) => sum + score, 0);
+        const hasSynergy = state.equippedTrinkets.some((id) => trinkets.find((item) => item.id === id)?.effect.synergy);
+        let endingKey = getEnding(runScores);
+        if (state.mode === "roguelite") {
+          if (runTotal >= 22 && state.hiddenNeedHits >= 3 && hasSynergy) endingKey = "shared-light";
+          else if (runTotal >= 22 && state.hiddenNeedHits >= 3) endingKey = "bright";
+          else if (state.equippedTrinkets.some((id) => trinkets.find((item) => item.id === id)?.effect.volatile) && runTotal < 18) endingKey = "tomorrow";
+          else if (runTotal >= 15) endingKey = "rain";
+          else endingKey = "stay";
+        }
+        const ending = state.mode === "roguelite" && ["shared-light", "tomorrow"].includes(endingKey)
+          ? { title: endingKey === "shared-light" ? "这盏灯不是一个人点亮的" : "明天还会有人来", copy: endingKey === "shared-light" ? "三天里，你一次次把灯递给了别人。\n后来才发现，灯光也沿着那些人，回到了你这里。" : "有些夜晚没有被整理好。\n但门铃会响，灯也会亮，明天还会有人来。", tone: endingKey === "shared-light" ? "warm" : "rain" }
+          : endings[endingKey];
         endingPanel.dataset.tone = ending.tone;
         endingPanel.innerHTML = `
           <div class="ending-copy-wrap">
             <p class="eyebrow">NIGHT SHIFT / LAST RECEIPT</p>
             <h1 id="ending-title">${ending.title}</h1>
             <p class="ending-copy">${ending.copy}</p>
-            <button class="primary-button" type="button" data-action="restart">再来一晚</button>
+            <button class="primary-button" type="button" data-action="restart">${state.mode === "roguelite" ? "再来一局" : "再来一晚"}</button>
           </div>
           <div class="ending-receipt">
-            <div class="receipt-title"><span>KEEP THE LIGHT ON</span><span>02:17</span></div>
+            <div class="receipt-title"><span>KEEP THE LIGHT ON</span><span>${state.mode === "roguelite" ? `现实 ${state.realClock}` : "02:17"}</span></div>
             <div class="receipt-list">
-              ${state.receipt.map((entry) => {
+              ${(state.mode === "roguelite" ? state.runReceipt : state.receipt).map((entry) => {
                 const names = entry.productIds.map((id) => products.find((product) => product.id === id)?.name).join(" · ");
                 return `<div class="receipt-line"><span>${entry.customerName}<br><small>${names}</small></span><strong>${receiptMood(entry.score)}</strong></div>`;
               }).join("")}
             </div>
-            <div class="status-bar"><span>这家店，暂时还没有关灯。</span><strong>3 位客人 / 3 袋心意</strong></div>
+            <div class="status-bar"><span>${state.mode === "roguelite" ? `饰品：${state.equippedTrinkets.map((id) => trinkets.find((item) => item.id === id)?.name).join(" · ") || "无"}` : "这家店，暂时还没有关灯。"}</span><strong>${state.mode === "roguelite" ? "三天 / 一局" : "3 位客人 / 3 袋心意"}</strong></div>
           </div>
         `;
       }
@@ -1391,18 +1770,33 @@
         app.dataset.screen = state.screen;
         introPanel.hidden = state.screen !== "intro";
         gamePanel.hidden = state.screen !== "game";
+        dayIntroPanel.hidden = state.screen !== "day-intro";
+        settlementPanel.hidden = state.screen !== "settlement";
+        trinketPanel.hidden = state.screen !== "trinket-reward";
         endingPanel.hidden = state.screen !== "ending";
 
+        document.querySelectorAll("[data-run-day]").forEach((node) => { node.textContent = state.mode === "roguelite" ? `第 ${state.day} 天` : "单晚"; });
+        document.querySelectorAll("[data-clock]").forEach((node) => { node.textContent = state.mode === "roguelite" ? state.gameClock : "02:17"; });
+
         if (state.screen === "game") {
-          progress.textContent = `${String(state.customerIndex + 1).padStart(2, "0")} / 03`;
+          const total = currentCustomers().length;
+          progress.textContent = `${String(state.customerIndex + 1).padStart(2, "0")} / ${String(total).padStart(2, "0")}`;
           renderCustomer();
           renderStage();
           renderProducts();
           renderBag();
           renderReceipt();
+        } else if (state.screen === "day-intro") {
+          renderDayIntro();
+        } else if (state.screen === "settlement") {
+          renderSettlement();
+        } else if (state.screen === "trinket-reward") {
+          renderTrinketReward();
         } else if (state.screen === "ending") {
           renderEnding();
         }
+        document.querySelectorAll("[data-real-clock]").forEach((node) => { node.textContent = state.realClock; });
+        document.querySelectorAll("[data-time-mood]").forEach((node) => { node.textContent = getTimeMood(); });
         renderAudioButton();
       }
 
@@ -1484,7 +1878,31 @@
       }
 
       startButton.addEventListener("click", startGame);
+      startRunButton.addEventListener("click", startRun);
       audioButton.addEventListener("click", () => setAudioEnabled(!state.audioEnabled));
+
+      dayIntroPanel.addEventListener("click", (event) => {
+        if (event.target.closest('[data-action="begin-day"]')) beginDay();
+      });
+
+      settlementPanel.addEventListener("click", (event) => {
+        if (!event.target.closest('[data-action="continue-to-trinkets"]')) return;
+        if (state.day === state.maxDays) {
+          state.screen = "ending";
+          render();
+          endingPanel.querySelector('[data-action="restart"]')?.focus({ preventScroll: true });
+          return;
+        }
+        state.trinketChoices = createTrinketChoices();
+        state.screen = "trinket-reward";
+        render();
+        trinketPanel.querySelector("[data-trinket-choice]")?.focus({ preventScroll: true });
+      });
+
+      trinketPanel.addEventListener("click", (event) => {
+        const choice = event.target.closest("[data-trinket-choice]");
+        if (choice) chooseTrinket(choice.dataset.trinketId);
+      });
 
       productGrid.addEventListener("click", (event) => {
         const card = event.target.closest("[data-product-card]");
@@ -1503,10 +1921,22 @@
 
       submitButton.addEventListener("click", () => {
         if (state.selectedProductIds.length !== 3 || state.showFeedback) return;
-        const customer = customers[state.customerIndex];
-        const score = scoreSelection(customer, state.selectedProductIds);
+        const customer = currentCustomers()[state.customerIndex];
+        const scored = state.mode === "roguelite"
+          ? scoreSelection(customer, state.selectedProductIds, state.equippedTrinkets, state.currentEvent, state.day)
+          : (() => { const legacyScore = scoreSelection(customer, state.selectedProductIds).score; return { score: legacyScore, hiddenNeedHit: false, responseLevel: responseLevel(legacyScore), hasSynergy: false, volatile: false }; })();
+        const score = scored.score;
         state.roundScores.push(score);
-        state.lastFeedback = customer.response[responseLevel(score)];
+        if (state.mode === "roguelite") {
+          state.dailyScores.push(score);
+          state.dailyHiddenNeedHits += scored.hiddenNeedHit ? 1 : 0;
+          state.hiddenNeedHits += scored.hiddenNeedHit ? 1 : 0;
+          state.streak = score >= 2 ? state.streak + 1 : 0;
+          state.dailyBestStreak = Math.max(state.dailyBestStreak, state.streak);
+          state.dailyEntries.push({ day: state.day, customerId: customer.id, customerName: customer.name, productIds: [...state.selectedProductIds], score, hiddenNeedHit: scored.hiddenNeedHit, eventId: state.currentEvent?.id, gameClock: state.gameClock, hasSynergy: scored.hasSynergy, volatile: scored.volatile });
+          state.runReceipt.push(state.dailyEntries.at(-1));
+        }
+        state.lastFeedback = customer.response[scored.responseLevel];
         state.receipt.push({
           customerName: customer.name,
           productIds: [...state.selectedProductIds],
@@ -1525,10 +1955,17 @@
         state.customerIndex += 1;
         state.selectedProductIds = [];
         state.lastFeedback = null;
-        state.screen = state.customerIndex >= customers.length ? "ending" : "game";
+        if (state.mode === "roguelite" && state.customerIndex >= state.dailyCustomers.length) {
+          state.screen = "settlement";
+          state.trinketChoices = [];
+        } else {
+          state.screen = state.customerIndex >= currentCustomers().length ? "ending" : "game";
+        }
         render();
         if (state.screen === "ending") {
           endingPanel.querySelector('[data-action="restart"]')?.focus({ preventScroll: true });
+        } else if (state.screen === "settlement") {
+          settlementPanel.querySelector('[data-action="continue-to-trinkets"]')?.focus({ preventScroll: true });
         } else {
           customerPanel.querySelector("#customer-name")?.focus();
         }
