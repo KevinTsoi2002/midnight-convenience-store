@@ -774,6 +774,18 @@
     .trinket-counts { display: flex; flex-wrap: wrap; gap: 16px; margin: 12px 0; color: var(--muted); font-size: 12px; }
     .trinket-counts strong { color: var(--lime-soft); }
     .trinket-summary { margin-top: 18px; color: var(--muted); font-size: 12px; }
+    .trinket-card[aria-pressed="true"] { border-color: var(--lime); background: rgba(184, 214, 90, .12); }
+    .trinket-card:disabled { cursor: default; opacity: .58; }
+    .trinket-card small { display: block; margin-top: 9px; color: #d7e2c9; line-height: 1.5; }
+    .trinket-drawer { border-top: 1px solid var(--line); padding-top: 18px; }
+    .trinket-drawer h2 { margin: 0 0 10px; font-size: 19px; font-weight: 500; }
+    .trinket-item { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; border-bottom: 1px solid var(--line); padding: 10px 0; color: var(--cream); font-size: 13px; }
+    .trinket-item span { flex: 1 1 200px; }
+    .trinket-item button, .trinket-actions button, .replace-list button { min-height: 44px; }
+    .trinket-actions, .replace-list { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0; }
+    .trinket-notice { min-height: 22px; color: var(--coral); font-size: 13px; }
+    .trinket-action-panel { border-top: 1px solid var(--line); margin-top: 16px; padding-top: 16px; }
+    .trinket-action-panel h2 { margin: 0; font-size: 19px; }
 
     @media (max-width: 680px) {
       .secondary-button { margin: 10px 0 0; }
@@ -883,21 +895,22 @@
       border-color: #3a5247;
       background: #182b25;
     }
+    .scene-column { min-width: 0; }
+    .night-dialogue {
+      min-height: 138px;
+      padding: 15px 17px;
+      border-top: 1px solid #526b5b;
+      background: #12241f;
+      color: #dce6d2;
+      line-height: 1.55;
+      overflow-wrap: anywhere;
+    }
+    [data-dialogue-kicker] { color: var(--lime); font-size: 11px; font-weight: 700; }
+    [data-dialogue-main] { margin: 5px 0; font-size: 14px; }
+    [data-dialogue-details] { color: #bdcab8; font-size: 12px; }
     .store-stage::before, .store-stage::after { display: none; }
     .scene-art { display: block; width: 100%; height: 100%; }
-    .scene-caption {
-      bottom: 0;
-      left: 0;
-      max-width: none;
-      width: 100%;
-      margin: 0;
-      padding: 12px 16px;
-      background: rgba(8,20,19,.86);
-      color: #d5ddbf;
-      line-height: 1.5;
-      font-size: 12px;
-      border-top: 1px solid #3a5247;
-    }
+    .scene-caption { display: none; }
     .rain-streaks { animation: rainfall 1.4s linear infinite; }
     .scene-person-art { transform-box: fill-box; transform-origin: center bottom; animation: breathing 6s ease-in-out infinite; }
     .customer-panel { min-height: 0; padding: 20px 8px 16px 0; background: none; border: 0; }
@@ -994,6 +1007,7 @@
       .customer-role { margin-bottom: 15px; }
       .store-stage { aspect-ratio: 8 / 5.3; }
       .scene-caption { font-size: 11px; padding: 8px 10px; }
+      .night-dialogue { min-height: 170px; padding: 12px; }
       .product-grid { grid-template-columns: repeat(3,minmax(0,1fr)); gap: 6px; }
       .product-card { flex-direction: column; align-items: center; min-height: 122px; gap: 5px; padding: 8px 4px; position: relative; text-align: center; }
       .product-icon { width: 34px; height: 48px; flex-basis: 48px; }
@@ -1033,7 +1047,14 @@
       </header>
 
       <div class="game-layout">
-        <section class="store-stage" data-store-stage aria-label="便利店场景"></section>
+        <div class="scene-column">
+          <section class="store-stage" data-store-stage aria-label="便利店场景"></section>
+          <section class="night-dialogue" data-night-dialogue aria-live="polite">
+            <div data-dialogue-kicker></div>
+            <p data-dialogue-main></p>
+            <div data-dialogue-details></div>
+          </section>
+        </div>
         <aside class="customer-panel" data-customer-panel aria-live="polite"></aside>
       </div>
 
@@ -1177,6 +1198,12 @@
         { id: "red-thread", name: "红线头", rarity: "legendary", tags: ["risk", "clarity"], description: "低分不会打断连击，但波动会更明显。", effect: { volatile: true } },
         { id: "window-seat", name: "窗边座位牌", rarity: "rare", tags: ["comfort", "company"], description: "安慰与陪伴同时命中时，额外获得一点分数。", effect: { synergy: ["comfort", "company"], bonus: 1 } }
       ];
+      const tagLabels = { warmth: "温暖", energy: "能量", comfort: "安慰", practical: "实用", company: "陪伴", light: "光线", clarity: "洞察", risk: "冒险" };
+      const synergyRules = [
+        { tags: ["warmth", "comfort"], name: "温暖构筑", detail: "低分时保底 1 分" },
+        { tags: ["clarity", "company"], name: "倾听构筑", detail: "命中隐藏需求时加 1 分" },
+        { tags: ["risk", "energy"], name: "波动构筑", detail: "高分加 1 分，低分标记波动" }
+      ];
 
       const dailyEvents = [
         { id: "rain", name: "雨势突然变大", description: "门口的伞只剩最后几把，大家都在看向窗外。", blockedProductIds: [], tagWeights: { comfort: 1.2, practical: 1.15 }, hiddenNeedSubstitute: "comfort", bonus: 1 },
@@ -1218,6 +1245,10 @@
         inventory: [],
         equippedTrinkets: [],
         trinketChoices: [],
+        trinketDraftId: null,
+        trinketAction: null,
+        replacingTrinketId: null,
+        trinketNotice: null,
         hiddenNeedHits: 0,
         dailyHiddenNeedHits: 0,
         streak: 0,
@@ -1232,7 +1263,8 @@
         audioEnabled: false,
         audioUnavailable: false,
         showFeedback: false,
-        lastFeedback: null
+        lastFeedback: null,
+        lastRoundResult: null
       };
 
       let audioContext = null;
@@ -1246,6 +1278,7 @@
       const endingPanel = document.querySelector('[data-screen-panel="ending"]');
       const customerPanel = document.querySelector("[data-customer-panel]");
       const stage = document.querySelector("[data-store-stage]");
+      const dialogue = document.querySelector("[data-night-dialogue]");
       const productGrid = document.querySelector("[data-product-grid]");
       const bag = document.querySelector("[data-bag]");
       const bagCount = document.querySelector("[data-bag-count]");
@@ -1302,38 +1335,141 @@
         return dailyEvents[Math.floor(createSeededRandom(seed + day * 3571)() * dailyEvents.length)];
       }
 
+      function getTrinketById(id) { return trinkets.find((trinket) => trinket.id === id); }
+      function getEquippedTrinkets(run) { return run.equippedTrinkets.map(getTrinketById).filter(Boolean); }
+      function getStoredTrinkets(run) { return run.inventory.filter((id) => !run.equippedTrinkets.includes(id)).map(getTrinketById).filter(Boolean); }
+      function getSynergies(equippedIds) {
+        const equipped = equippedIds.map(getTrinketById).filter(Boolean);
+        return synergyRules.filter((rule) => equipped.some((first, index) =>
+          first.tags.includes(rule.tags[0]) && equipped.some((second, otherIndex) =>
+            otherIndex !== index && second.tags.includes(rule.tags[1]))));
+      }
+      function getSynergySummary(run) {
+        const active = getSynergies(run.equippedTrinkets);
+        return active.length ? active.map((rule) => `${rule.name}：${rule.detail}`).join("；") : "当前没有装备协同";
+      }
+      function canEquipTrinket(run, id) {
+        if (!getTrinketById(id)) return { ok: false, reason: "饰品不存在" };
+        if (run.equippedTrinkets.includes(id)) return { ok: false, reason: "已经装备" };
+        if (run.equippedTrinkets.length >= 3) return { ok: false, reason: "装备槽已满，请选择替换" };
+        if (!run.inventory.includes(id) && run.inventory.length >= 8) return { ok: false, reason: "背包已满，请选择替换" };
+        return { ok: true };
+      }
+      function applyTrinketAction(run, { trinketId, action, replaceId }) {
+        const next = { ...run, inventory: [...run.inventory], equippedTrinkets: [...run.equippedTrinkets] };
+        if (action === "abandon") return { ok: true, state: next };
+        if (!getTrinketById(trinketId)) return { ok: false, reason: "饰品不存在" };
+        const owned = next.inventory.includes(trinketId);
+        if (action === "store") {
+          if (owned) return { ok: false, reason: "已经拥有这件饰品" };
+          if (next.inventory.length >= 8) return { ok: false, reason: "背包已满" };
+          next.inventory.push(trinketId);
+        } else if (action === "unequip") {
+          if (!next.equippedTrinkets.includes(trinketId)) return { ok: false, reason: "这件饰品未装备" };
+          next.equippedTrinkets = next.equippedTrinkets.filter((id) => id !== trinketId);
+        } else if (action === "equip") {
+          const allowed = canEquipTrinket(run, trinketId);
+          if (!allowed.ok) return allowed;
+          if (!owned) next.inventory.push(trinketId);
+          next.equippedTrinkets.push(trinketId);
+        } else if (action === "replace") {
+          if (!next.equippedTrinkets.includes(replaceId) || replaceId === trinketId) return { ok: false, reason: "请选择要卸下的装备" };
+          if (!owned && next.inventory.length >= 8) next.inventory = next.inventory.filter((id) => id !== replaceId);
+          if (!owned) next.inventory.push(trinketId);
+          next.equippedTrinkets = next.equippedTrinkets.map((id) => id === replaceId ? trinketId : id);
+        } else return { ok: false, reason: "未知操作" };
+        return { ok: true, state: next };
+      }
+      function getCoveredTags(selectedIds) {
+        return [...new Set(products.filter((product) => selectedIds.includes(product.id)).flatMap((product) => product.tags))];
+      }
+      function getUncoveredNeeds(customer, selectedIds) {
+        const covered = new Set(getCoveredTags(selectedIds));
+        return customer.needs.filter((need) => !covered.has(need));
+      }
+
       function getTrinketModifiers(trinketIds, context) {
-        return trinketIds
+        const result = trinketIds
           .map((id) => trinkets.find((trinket) => trinket.id === id))
           .filter(Boolean)
           .reduce((result, trinket) => {
             const effect = trinket.effect;
-            if (effect.tags?.some((tag) => context.selectedTags.has(tag))) result.scoreBonus += effect.bonus ?? 0;
+            if (effect.tags?.some((tag) => context.selectedTags.has(tag))) {
+              result.scoreBonus += effect.bonus ?? 0;
+              result.triggeredTrinkets.push(trinket.name);
+            }
             if (effect.synergy?.every((tag) => context.selectedTags.has(tag))) {
               result.scoreBonus += effect.bonus ?? 0;
-              result.hasSynergy = true;
+              result.triggeredTrinkets.push(trinket.name);
             }
-            if (effect.hiddenBonus && context.hiddenNeedHit) result.scoreBonus += effect.hiddenBonus;
-            if (effect.lowFloor) result.lowFloor = Math.max(result.lowFloor, effect.lowFloor);
-            if (effect.volatile) result.volatile = true;
+            if (effect.hiddenBonus && context.hiddenNeedHit) {
+              result.scoreBonus += effect.hiddenBonus;
+              result.triggeredTrinkets.push(trinket.name);
+            }
+            if (effect.lowFloor) {
+              result.lowFloor = Math.max(result.lowFloor, effect.lowFloor);
+              result.lowFloorSource = trinket.name;
+            }
+            if (effect.volatile) result.volatileSource = trinket.name;
             return result;
-          }, { scoreBonus: 0, lowFloor: 0, hasSynergy: false, volatile: false });
+          }, { scoreBonus: 0, lowFloor: 0, lowFloorSource: null, volatileSource: null, triggeredTrinkets: [] });
+        result.synergies = getSynergies(trinketIds);
+        if (context.hiddenNeedHit && result.synergies.some((rule) => rule.name === "倾听构筑")) result.scoreBonus += 1;
+        return result;
       }
 
       function scoreSelection(customer, selectedIds, trinketIds = state.equippedTrinkets, event = null, day = state.day) {
-        const selectedTags = new Set(
-          products
-            .filter((product) => selectedIds.includes(product.id))
-            .flatMap((product) => product.tags)
-        );
+        const coveredTags = getCoveredTags(selectedIds);
+        const selectedTags = new Set(coveredTags);
         const tagWeights = event?.tagWeights ?? {};
         const visibleScore = customer.needs.reduce((score, need) => score + (selectedTags.has(need) ? (tagWeights[need] ?? 1) : 0), 0);
         const hiddenScore = day >= 2 ? customer.hiddenNeeds.reduce((score, need) => score + (selectedTags.has(need) ? 1 : 0), 0) : 0;
         const hiddenNeedHit = hiddenScore > 0 || Boolean(event?.hiddenNeedSubstitute && selectedTags.has(event.hiddenNeedSubstitute));
         const modifiers = getTrinketModifiers(trinketIds, { customer, selectedTags, day, hiddenNeedHit });
         let score = Math.min(3, Math.max(0, Math.round(visibleScore + hiddenScore + modifiers.scoreBonus)));
-        if (score === 0 && modifiers.lowFloor) score = modifiers.lowFloor;
-        return { score, visibleScore, hiddenNeedHit, hasSynergy: modifiers.hasSynergy, volatile: modifiers.volatile, responseLevel: responseLevel(score) };
+        const triggeredSynergies = [];
+        if (hiddenNeedHit && modifiers.synergies.some((rule) => rule.name === "倾听构筑")) triggeredSynergies.push("倾听构筑");
+        const riskSynergy = modifiers.synergies.some((rule) => rule.name === "波动构筑");
+        if (riskSynergy && score >= 2 && score < 3) {
+          score += 1;
+          triggeredSynergies.push("波动构筑");
+        }
+        if (score < 2 && modifiers.synergies.some((rule) => rule.name === "温暖构筑")) {
+          score += 1;
+          triggeredSynergies.push("温暖构筑");
+        }
+        if (score < 1 && modifiers.lowFloor) {
+          score = 1;
+          if (modifiers.lowFloorSource) modifiers.triggeredTrinkets.push(modifiers.lowFloorSource);
+        }
+        const volatile = score < 2 && (riskSynergy || Boolean(modifiers.volatileSource));
+        if (volatile && riskSynergy) triggeredSynergies.push("波动构筑");
+        if (volatile && modifiers.volatileSource) modifiers.triggeredTrinkets.push(modifiers.volatileSource);
+        return { score, coveredTags, visibleNeedHits: customer.needs.filter((need) => selectedTags.has(need)), visibleScore, hiddenNeedHit,
+          triggeredTrinkets: [...new Set(modifiers.triggeredTrinkets)], triggeredSynergies,
+          hasSynergy: modifiers.synergies.length > 0, volatile, responseLevel: responseLevel(score) };
+      }
+
+      function getTrinketTriggerSummary(result) {
+        const details = result.triggeredTrinkets.map((name) => `${name}（${trinketRuleText(getTrinketById(trinkets.find((item) => item.name === name)?.id))}）`);
+        const synergyDetails = result.triggeredSynergies.map((name) => `${name}（${synergyRules.find((rule) => rule.name === name)?.detail ?? "效果生效"}）`);
+        const names = [...details, ...synergyDetails];
+        return names.length ? `饰品生效：${names.join("；")}${result.volatile ? "；本轮波动" : ""}` : "饰品生效：本轮无触发";
+      }
+
+      function getRoundDialogue(run, customer, selectedIds, result) {
+        if (result) return {
+          kicker: `${customer.name} · 装袋反馈`,
+          main: customer.response[result.responseLevel],
+          details: `显性需求：${result.visibleNeedHits.length} / ${customer.needs.length}；隐藏需求：${result.hiddenNeedHit && run.mode === "roguelite" ? "命中" : "未命中"}；分数 ${result.score} / 3；连击 ${run.streak}。${run.mode === "roguelite" ? getTrinketTriggerSummary(result) : ""}`
+        };
+        const selected = products.filter((product) => selectedIds.includes(product.id));
+        const uncovered = getUncoveredNeeds(customer, selectedIds);
+        return {
+          kicker: `${customer.name} · ${customer.role}`,
+          main: `${customer.line} 观察：${customer.observation}${run.mode === "roguelite" ? ` 今晚事件：${run.currentEvent.name}。` : ""}`,
+          details: `已装入：${selected.length ? selected.map((product) => product.name).join("、") : "暂无"}；覆盖标签：${getCoveredTags(selectedIds).map((tag) => tagLabels[tag]).join("、") || "暂无"}；尚未覆盖：${uncovered.map((tag) => tagLabels[tag]).join("、") || "无"}。${run.mode === "roguelite" && run.day >= 2 ? `隐藏线索：${run.day === 3 ? "还有没说出口的需要。" : customer.observation}` : ""}`
+        };
       }
 
       function responseLevel(score) {
@@ -1507,6 +1643,17 @@
         return { common: "普通", rare: "稀有", epic: "史诗", legendary: "传说" }[rarity] ?? rarity;
       }
 
+      function trinketRuleText(trinket) {
+        const effect = trinket.effect;
+        if (effect.lowFloor) return "低分时保底 1 分";
+        if (effect.hiddenBonus) return `命中隐藏需求时加 ${effect.hiddenBonus} 分`;
+        if (effect.tags) return `选中${effect.tags.map((tag) => tagLabels[tag]).join("或")}时加 ${effect.bonus} 分`;
+        if (effect.synergy) return `商品覆盖${effect.synergy.map((tag) => tagLabels[tag]).join("与")}时加 ${effect.bonus} 分`;
+        if (effect.volatile) return "低分标记为波动";
+        if (effect.streakBonus) return "结算时增加连击品质";
+        return "第 3 天保留完整线索";
+      }
+
       function createTrinketChoices() {
         const settlement = getDailySettlement(state.day);
         const qualities = getTrinketQuality(settlement, state.day);
@@ -1515,7 +1662,8 @@
         const choices = [];
         const preferred = available.filter((trinket) => qualities.includes(trinket.rarity));
         while (choices.length < 3 && preferred.length) choices.push(preferred.splice(Math.floor(random() * preferred.length), 1)[0]);
-        while (choices.length < 3 && available.length) choices.push(available.splice(Math.floor(random() * available.length), 1)[0]);
+        const remaining = available.filter((trinket) => !choices.some((choice) => choice.id === trinket.id));
+        while (choices.length < 3 && remaining.length) choices.push(remaining.splice(Math.floor(random() * remaining.length), 1)[0]);
         return choices;
       }
 
@@ -1532,6 +1680,10 @@
         state.dailyHiddenNeedHits = 0;
         state.streak = 0;
         state.dailyBestStreak = 0;
+        state.trinketDraftId = null;
+        state.trinketAction = null;
+        state.replacingTrinketId = null;
+        state.trinketNotice = null;
         state.dailyCustomers = buildDailyCustomers(1, state.runSeed);
         state.currentEvent = getDailyEvent(1, state.runSeed);
         state.gameClock = getNightClock(1);
@@ -1550,18 +1702,20 @@
         state.dailyScores = [];
         state.dailyEntries = [];
         state.trinketChoices = [];
+        state.trinketDraftId = null;
+        state.trinketAction = null;
+        state.replacingTrinketId = null;
+        state.trinketNotice = null;
         state.dailyHiddenNeedHits = 0;
         state.streak = 0;
         state.showFeedback = false;
         state.lastFeedback = null;
+        state.lastRoundResult = null;
         render();
         productGrid.querySelector("[data-product-card]:not([disabled])")?.focus({ preventScroll: true });
       }
 
-      function chooseTrinket(id) {
-        if (state.inventory.length >= 8 || state.inventory.includes(id)) return;
-        state.inventory.push(id);
-        if (state.equippedTrinkets.length < 3) state.equippedTrinkets.push(id);
+      function advanceRunDay() {
         if (state.day < state.maxDays) {
           state.day += 1;
           state.dailyCustomers = buildDailyCustomers(state.day, state.runSeed, state.dailyCustomers.map((customer) => customer.id));
@@ -1574,6 +1728,33 @@
         render();
         const focusTarget = state.screen === "day-intro" ? '[data-action="begin-day"]' : '[data-action="restart"]';
         document.querySelector(focusTarget)?.focus({ preventScroll: true });
+      }
+
+      function chooseTrinket(id) {
+        if (!state.trinketChoices.some((item) => item.id === id) || state.inventory.includes(id)) return;
+        state.trinketDraftId = id;
+        state.trinketAction = "draft";
+        state.replacingTrinketId = null;
+        state.trinketNotice = null;
+        render();
+        trinketPanel.querySelector('[data-action="draft-equip"]')?.focus({ preventScroll: true });
+      }
+
+      function commitTrinket(action, id, replaceId) {
+        const result = applyTrinketAction(state, { trinketId: id, action, replaceId });
+        if (!result.ok) {
+          state.trinketNotice = result.reason;
+        } else {
+          state.inventory = result.state.inventory;
+          state.equippedTrinkets = result.state.equippedTrinkets;
+          state.trinketNotice = action === "unequip" ? "已卸下" : action === "replace" ? "已替换装备" : action === "store" ? "已放入背包" : "已装备";
+          if (id === state.trinketDraftId && ["equip", "store", "replace"].includes(action)) {
+            state.trinketAction = "managed";
+            state.replacingTrinketId = null;
+          }
+        }
+        render();
+        trinketPanel.querySelector('[data-action="next-day"], [data-action="cancel-replace"], [data-trinket-choice]')?.focus({ preventScroll: true });
       }
 
       function renderDayIntro() {
@@ -1605,7 +1786,40 @@
       function renderTrinketReward() {
         const settlement = getDailySettlement(state.day);
         state.trinketChoices = state.trinketChoices.length ? state.trinketChoices : createTrinketChoices();
-        trinketPanel.innerHTML = `<div class="overlay-card" data-trinket-reward><p class="eyebrow">A SMALL THING TO KEEP</p><h1 id="trinket-title">选一件带走</h1><p class="overlay-copy">品质区间：<span data-quality-range>${getTrinketQuality(settlement, state.day).map(rarityLabel).join(" / ")}</span>。饰品会改变接下来几晚的判断方式。</p><div class="trinket-counts"><span>背包 <strong data-inventory-count>${state.inventory.length} / 8</strong></span><span>装备 <strong data-equipped-count>${state.equippedTrinkets.length} / 3</strong></span></div><div class="trinket-grid">${state.trinketChoices.map((trinket) => `<button class="trinket-card" type="button" data-trinket-choice data-trinket-id="${trinket.id}" data-action="choose-trinket"><span class="trinket-rarity">${rarityLabel(trinket.rarity)}</span><strong>${trinket.name}</strong><span class="trinket-description">${trinket.description}</span></button>`).join("")}</div></div>`;
+        const draft = getTrinketById(state.trinketDraftId);
+        const pending = state.trinketAction === "draft" || state.trinketAction === "replace";
+        const candidateLocked = state.trinketAction === "managed" || state.trinketAction === "replace";
+        const replacing = getTrinketById(state.replacingTrinketId);
+        const preview = replacing && draft ? getSynergySummary({ equippedTrinkets: [...state.equippedTrinkets.filter((id) => id !== replacing.id), draft.id] }) : "";
+        trinketPanel.innerHTML = `<div class="overlay-card" data-trinket-reward>
+          <p class="eyebrow">A SMALL THING TO KEEP</p><h1 id="trinket-title">值班抽屉</h1>
+          <p class="overlay-copy">品质区间：<span data-quality-range>${getTrinketQuality(settlement, state.day).map(rarityLabel).join(" / ")}</span></p>
+          <div class="trinket-counts"><span>背包 <strong data-inventory-count>${state.inventory.length} / 8</strong></span><span>装备 <strong data-equipped-count>${state.equippedTrinkets.length} / 3</strong></span></div>
+          <section data-trinket-candidates>
+            <div class="trinket-grid">${state.trinketChoices.map((item) => `<button class="trinket-card" type="button" data-trinket-choice data-trinket-id="${item.id}" aria-pressed="${item.id === state.trinketDraftId}" ${candidateLocked || state.inventory.includes(item.id) ? "disabled" : ""}>
+              <span class="trinket-rarity">${rarityLabel(item.rarity)} · ${item.tags.map((tag) => tagLabels[tag]).join(" / ")}</span><strong>${item.name}</strong>
+              <span class="trinket-description">${item.description}</span><small>规则：${trinketRuleText(item)}</small>
+              <small>${getSynergies([...state.equippedTrinkets, item.id]).map((rule) => `与当前装备组成${rule.name}`).join("；") || "当前无新协同"} · ${state.inventory.includes(item.id) ? "已拥有" : "候选"}</small>
+            </button>`).join("")}</div>
+          </section>
+          <section class="trinket-drawer" data-trinket-drawer>
+            <h2>背包与装备</h2><p class="trinket-summary" data-synergy-summary>${getSynergySummary(state)}</p>
+            ${state.inventory.length ? state.inventory.map((id) => {
+              const item = getTrinketById(id);
+              const equipped = state.equippedTrinkets.includes(id);
+              return `<div class="trinket-item"><span>${item.name} · ${equipped ? "已装备" : "背包"}</span><button class="secondary-button" type="button" data-action="${equipped ? "unequip" : "equip-owned"}" data-trinket-id="${id}">${equipped ? "卸下" : "装备"}</button></div>`;
+            }).join("") : "<p class=\"overlay-copy\">背包里还没有饰品。</p>"}
+          </section>
+          <section class="trinket-action-panel" data-trinket-action-panel ${pending ? "" : "hidden"}>
+            <h2>${state.trinketAction === "replace" ? "选择要卸下的饰品" : `如何处理${draft?.name ?? ""}？`}</h2>
+            ${state.trinketAction === "replace" ? `<div class="replace-list">${getEquippedTrinkets(state).map((item) => `<button class="secondary-button" type="button" data-action="preview-replace" data-trinket-id="${item.id}" aria-pressed="${item.id === state.replacingTrinketId}">${item.name}</button>`).join("")}</div>
+              <p class="trinket-summary">${replacing ? `卸下${replacing.name} / 装备${draft.name}；${preview}` : "选择一件已装备的饰品查看变化。"}</p>
+              <div class="trinket-actions"><button class="primary-button" type="button" data-action="confirm-replace" ${replacing ? "" : "disabled"}>确认替换</button><button class="secondary-button" type="button" data-action="cancel-replace">返回操作</button></div>` :
+              `<div class="trinket-actions"><button class="primary-button" type="button" data-action="draft-equip">装备</button><button class="secondary-button" type="button" data-action="draft-store">放入背包</button><button class="secondary-button" type="button" data-action="draft-abandon">放弃</button></div>`}
+          </section>
+          <p class="trinket-notice" role="status">${state.trinketNotice ?? ""}</p>
+          ${state.trinketAction === "managed" ? `<button class="primary-button" type="button" data-action="next-day">${state.day === state.maxDays ? "查看结局" : "进入下一天"}</button>` : ""}
+        </div>`;
       }
 
       function startGame() {
@@ -1634,12 +1848,17 @@
         state.dailyCustomers = [];
         state.currentEvent = null;
         state.trinketChoices = [];
+        state.trinketDraftId = null;
+        state.trinketAction = null;
+        state.replacingTrinketId = null;
+        state.trinketNotice = null;
         state.customerIndex = 0;
         state.selectedProductIds = [];
         state.roundScores = [];
         state.receipt = [];
         state.showFeedback = false;
         state.lastFeedback = null;
+        state.lastRoundResult = null;
         state.realClock = getRealClock();
         render();
         startButton.focus({ preventScroll: true });
@@ -1667,11 +1886,13 @@
       }
 
       function renderStage() {
-        const customer = currentCustomers()[state.customerIndex];
         const stageTone = state.showFeedback ? responseLevel(state.roundScores.at(-1)) : "";
         stage.dataset.tone = stageTone;
-        stage.innerHTML = `${sceneArtwork(state.customerIndex, state.showFeedback)}
-          <p class="scene-caption">${state.showFeedback ? "叮。新的一张小票，一点小小的心意。" : ["头盔没有摘下。他的下一单，还在等。", "一盏小灯没了电。她在有光的地方停下来。", "不是每个人，都急着在雨停后离开。"][state.customerIndex]}</p>`;
+        stage.innerHTML = sceneArtwork(state.customerIndex, state.showFeedback);
+        const lines = getRoundDialogue(state, currentCustomers()[state.customerIndex], state.selectedProductIds, state.showFeedback ? state.lastRoundResult : null);
+        dialogue.querySelector("[data-dialogue-kicker]").textContent = lines.kicker;
+        dialogue.querySelector("[data-dialogue-main]").textContent = lines.main;
+        dialogue.querySelector("[data-dialogue-details]").textContent = lines.details;
       }
 
       function renderProducts() {
@@ -1722,7 +1943,7 @@
       function renderEnding() {
         const runScores = state.mode === "roguelite" ? state.dailyEntries.map((entry) => entry.score) : state.roundScores;
         const runTotal = state.mode === "roguelite" ? state.runReceipt.reduce((sum, entry) => sum + entry.score, 0) : runScores.reduce((sum, score) => sum + score, 0);
-        const hasSynergy = state.equippedTrinkets.some((id) => trinkets.find((item) => item.id === id)?.effect.synergy);
+        const hasSynergy = getSynergies(state.equippedTrinkets).length > 0;
         let endingKey = getEnding(runScores);
         if (state.mode === "roguelite") {
           if (runTotal >= 22 && state.hiddenNeedHits >= 3 && hasSynergy) endingKey = "shared-light";
@@ -1887,13 +2108,11 @@
 
       settlementPanel.addEventListener("click", (event) => {
         if (!event.target.closest('[data-action="continue-to-trinkets"]')) return;
-        if (state.day === state.maxDays) {
-          state.screen = "ending";
-          render();
-          endingPanel.querySelector('[data-action="restart"]')?.focus({ preventScroll: true });
-          return;
-        }
         state.trinketChoices = createTrinketChoices();
+        state.trinketDraftId = null;
+        state.trinketAction = null;
+        state.replacingTrinketId = null;
+        state.trinketNotice = null;
         state.screen = "trinket-reward";
         render();
         trinketPanel.querySelector("[data-trinket-choice]")?.focus({ preventScroll: true });
@@ -1901,7 +2120,47 @@
 
       trinketPanel.addEventListener("click", (event) => {
         const choice = event.target.closest("[data-trinket-choice]");
-        if (choice) chooseTrinket(choice.dataset.trinketId);
+        if (choice) { chooseTrinket(choice.dataset.trinketId); return; }
+        const action = event.target.closest("[data-action]")?.dataset.action;
+        const id = event.target.closest("[data-trinket-id]")?.dataset.trinketId;
+        if (action === "next-day" || action === "draft-abandon") { advanceRunDay(); return; }
+        if (action === "draft-store") { commitTrinket("store", state.trinketDraftId); return; }
+        if (action === "draft-equip" || action === "equip-owned") {
+          const targetId = action === "draft-equip" ? state.trinketDraftId : id;
+          if (state.equippedTrinkets.length >= 3 || (!state.inventory.includes(targetId) && state.inventory.length >= 8)) {
+            state.trinketDraftId = targetId;
+            state.trinketAction = "replace";
+            state.replacingTrinketId = null;
+            state.trinketNotice = "选择一件已装备的饰品";
+            render();
+            trinketPanel.querySelector('[data-action="preview-replace"]')?.focus({ preventScroll: true });
+          } else commitTrinket("equip", targetId);
+          return;
+        }
+        if (action === "unequip") { commitTrinket("unequip", id); return; }
+        if (action === "preview-replace") {
+          state.replacingTrinketId = id;
+          render();
+          trinketPanel.querySelector('[data-action="confirm-replace"]')?.focus({ preventScroll: true });
+          return;
+        }
+        if (action === "confirm-replace") { commitTrinket("replace", state.trinketDraftId, state.replacingTrinketId); return; }
+        if (action === "cancel-replace") {
+          state.trinketAction = state.inventory.includes(state.trinketDraftId) ? "managed" : "draft";
+          state.replacingTrinketId = null;
+          state.trinketNotice = null;
+          render();
+          trinketPanel.querySelector('[data-action="draft-equip"], [data-action="next-day"]')?.focus({ preventScroll: true });
+        }
+      });
+      trinketPanel.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && state.trinketAction === "replace") {
+          event.preventDefault();
+          state.trinketAction = state.inventory.includes(state.trinketDraftId) ? "managed" : "draft";
+          state.replacingTrinketId = null;
+          render();
+          trinketPanel.querySelector('[data-action="draft-equip"], [data-action="next-day"]')?.focus({ preventScroll: true });
+        }
       });
 
       productGrid.addEventListener("click", (event) => {
@@ -1922,9 +2181,10 @@
       submitButton.addEventListener("click", () => {
         if (state.selectedProductIds.length !== 3 || state.showFeedback) return;
         const customer = currentCustomers()[state.customerIndex];
-        const scored = state.mode === "roguelite"
-          ? scoreSelection(customer, state.selectedProductIds, state.equippedTrinkets, state.currentEvent, state.day)
-          : (() => { const legacyScore = scoreSelection(customer, state.selectedProductIds).score; return { score: legacyScore, hiddenNeedHit: false, responseLevel: responseLevel(legacyScore), hasSynergy: false, volatile: false }; })();
+        const scored = scoreSelection(customer, state.selectedProductIds,
+          state.mode === "roguelite" ? state.equippedTrinkets : [],
+          state.mode === "roguelite" ? state.currentEvent : null,
+          state.mode === "roguelite" ? state.day : 1);
         const score = scored.score;
         state.roundScores.push(score);
         if (state.mode === "roguelite") {
@@ -1937,6 +2197,7 @@
           state.runReceipt.push(state.dailyEntries.at(-1));
         }
         state.lastFeedback = customer.response[scored.responseLevel];
+        state.lastRoundResult = scored;
         state.receipt.push({
           customerName: customer.name,
           productIds: [...state.selectedProductIds],
@@ -1955,6 +2216,7 @@
         state.customerIndex += 1;
         state.selectedProductIds = [];
         state.lastFeedback = null;
+        state.lastRoundResult = null;
         if (state.mode === "roguelite" && state.customerIndex >= state.dailyCustomers.length) {
           state.screen = "settlement";
           state.trinketChoices = [];

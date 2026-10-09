@@ -112,17 +112,24 @@ test("roguelite: seeded three-day loop exposes events, settlement and trinkets",
     await finishRunDay(page, 3);
     assert.equal(await page.locator("[data-help-rate]").isVisible(), true);
     await page.getByRole("button", { name: "继续到饰品", exact: true }).click();
-    assert.equal(await page.locator("[data-trinket-choice]").count(), 3);
-    await page.locator("[data-trinket-choice]").first().click();
+    assert.equal(await page.locator('[data-screen-panel="trinket-reward"] [data-trinket-choice]').count(), 3);
+    await page.locator('[data-screen-panel="trinket-reward"] [data-trinket-choice]').first().click();
+    await page.getByRole("button", { name: "装备", exact: true }).last().click();
+    await page.getByRole("button", { name: "进入下一天", exact: true }).click();
     assert.equal(await page.locator("[data-run-day]").first().innerText(), "第 2 天");
     await finishRunDay(page, 4);
     await page.getByRole("button", { name: "继续到饰品", exact: true }).click();
     assert.equal(await page.locator("[data-trinket-choice]").count(), 3);
     assert.match(await page.locator("[data-quality-range]").last().innerText(), /common|rare|epic|legendary|普通|稀有|史诗|传说/);
     await page.locator("[data-trinket-choice]").first().click();
+    await page.getByRole("button", { name: "装备", exact: true }).last().click();
+    await page.getByRole("button", { name: "进入下一天", exact: true }).click();
     assert.equal(await page.locator("[data-run-day]").first().innerText(), "第 3 天");
     await finishRunDay(page, 5);
     await page.getByRole("button", { name: "查看今晚结局", exact: true }).click();
+    assert.equal(await page.locator('[data-screen-panel="trinket-reward"] [data-trinket-choice]').count(), 3);
+    await page.locator('[data-screen-panel="trinket-reward"] [data-trinket-choice]').first().click();
+    await page.getByRole("button", { name: "放弃", exact: true }).click();
     assert.equal(await page.locator('[data-screen-panel="ending"]').isVisible(), true);
     assert.equal(await page.locator(".ending-receipt .receipt-line").count(), 12);
   });
@@ -141,6 +148,226 @@ test("roguelite: mobile overlays stay within the viewport", async () => {
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
   }, { viewport: { width: 390, height: 844 } });
 });
+
+test("night dialogue: selection updates coverage and submission preserves scored feedback", async () => {
+  await withPage(async (page) => {
+    await startRun(page);
+    await page.getByRole("button", { name: "开始营业", exact: true }).click();
+    const dialogue = page.locator("[data-night-dialogue]");
+    const initial = await dialogue.innerText();
+    assert.match(initial, /线索|观察/);
+    assert.match(initial, /尚未覆盖/);
+    await page.locator("[data-product-card]:not([disabled])").first().click();
+    assert.notEqual(await dialogue.innerText(), initial);
+    assert.match(await dialogue.innerText(), /已装入|覆盖标签/);
+    const ids = await page.locator("[data-product-card]:not([disabled]):not(.is-selected)").evaluateAll((cards) => cards.slice(0, 2).map((card) => card.dataset.productId));
+    for (const id of ids) await page.locator(`[data-product-id="${id}"]`).click();
+    await page.getByRole("button", { name: "装袋", exact: true }).click();
+    const feedback = await dialogue.innerText();
+    assert.match(feedback, /显性需求|隐藏需求/);
+    assert.match(feedback, /分数.*连击/);
+    assert.notEqual(feedback, initial);
+  });
+});
+
+test("trinket drawer: draft can be stored, equipped later and unequipped", async () => {
+  await withPage(async (page) => {
+    await startRun(page);
+    await finishRunDay(page, 3);
+    await page.getByRole("button", { name: "继续到饰品", exact: true }).click();
+    await page.locator("[data-trinket-choice]").first().click();
+    assert.equal(await page.locator("[data-trinket-action-panel]").isVisible(), true);
+    await page.getByRole("button", { name: "放入背包", exact: true }).click();
+    assert.equal(await page.locator("[data-inventory-count]").innerText(), "1 / 8");
+    assert.equal(await page.locator("[data-equipped-count]").innerText(), "0 / 3");
+    await page.getByRole("button", { name: "装备", exact: true }).click();
+    assert.equal(await page.locator("[data-equipped-count]").innerText(), "1 / 3");
+    await page.getByRole("button", { name: "卸下", exact: true }).click();
+    assert.equal(await page.locator("[data-equipped-count]").innerText(), "0 / 3");
+    await page.getByRole("button", { name: "进入下一天", exact: true }).click();
+    assert.equal(await page.locator("[data-run-day]").first().innerText(), "第 2 天");
+  });
+});
+
+test("trinket drawer: completing one candidate locks the other candidates", async () => {
+  await withPage(async (page) => {
+    await startRun(page);
+    await finishRunDay(page, 3);
+    await page.getByRole("button", { name: "继续到饰品", exact: true }).click();
+    const choices = page.locator("[data-trinket-choice]");
+    await choices.first().click();
+    await page.getByRole("button", { name: "放入背包", exact: true }).click();
+    assert.equal(await choices.count(), 3);
+    assert.equal(await choices.evaluateAll((buttons) => buttons.every((button) => button.disabled)), true);
+    assert.equal(await page.locator("[data-inventory-count]").innerText(), "1 / 8");
+  });
+});
+
+test("trinket drawer: abandoning a draft advances without adding it", async () => {
+  await withPage(async (page) => {
+    await startRun(page);
+    await finishRunDay(page, 3);
+    await page.getByRole("button", { name: "继续到饰品", exact: true }).click();
+    await page.locator("[data-trinket-choice]").first().click();
+    await page.getByRole("button", { name: "放弃", exact: true }).click();
+    assert.equal(await page.locator("[data-run-day]").first().innerText(), "第 2 天");
+    assert.match(await page.locator("[data-day-intro-content]").innerText(), /还没有饰品/);
+  });
+});
+
+test("trinket drawer: third reward can be equipped, then unequipped without leaving the drawer", async () => {
+  await withPage(async (page) => {
+    await startRun(page);
+    await finishRunDay(page, 3);
+    await page.getByRole("button", { name: "继续到饰品", exact: true }).click();
+    await page.locator('[data-screen-panel="trinket-reward"] [data-trinket-choice]').first().click();
+    await page.getByRole("button", { name: "装备", exact: true }).last().click();
+    await page.getByRole("button", { name: "进入下一天", exact: true }).click();
+    await finishRunDay(page, 4);
+    await page.getByRole("button", { name: "继续到饰品", exact: true }).click();
+    await page.locator('[data-screen-panel="trinket-reward"] [data-trinket-choice]').first().click();
+    await page.getByRole("button", { name: "装备", exact: true }).last().click();
+    await page.getByRole("button", { name: "进入下一天", exact: true }).click();
+    await finishRunDay(page, 5);
+    await page.getByRole("button", { name: "查看今晚结局", exact: true }).click();
+    await page.locator('[data-screen-panel="trinket-reward"] [data-trinket-choice]').first().click();
+    await page.getByRole("button", { name: "装备", exact: true }).last().click();
+    const equipped = await page.locator("[data-trinket-drawer]").innerText();
+    assert.equal(await page.locator("[data-equipped-count]").innerText(), "3 / 3");
+    await page.locator("[data-trinket-drawer] button").first().click();
+    assert.equal(await page.locator("[data-equipped-count]").innerText(), "2 / 3");
+    await page.getByRole("button", { name: "装备", exact: true }).last().click();
+    assert.equal(await page.locator("[data-equipped-count]").innerText(), "3 / 3");
+    assert.equal(await page.locator("[data-trinket-drawer]").innerText(), equipped);
+  });
+});
+
+test("trinket rules: full slots replace explicitly, cancel is inert, and only equipped pairs synergize", async () => {
+  await withPage(async (page) => {
+    const html = await readFile(new URL(htmlUrl), "utf8");
+    const instrumented = html.replace(
+      /      render\(\);\s*\}\)\(\);\s*<\/script>/,
+      '      window.__rules = { applyTrinketAction, getSynergies, canEquipTrinket }; render();\n    })();\n  </script>'
+    );
+    assert.notEqual(instrumented, html);
+    await page.setContent(instrumented);
+    const result = await page.evaluate(() => {
+      const { applyTrinketAction, getSynergies, canEquipTrinket } = window.__rules;
+      const full = { inventory: ["old-coin", "warm-bulb", "staff-scarf", "rain-note", "mint-candy", "old-badge", "glowing-key", "thermos"], equippedTrinkets: ["old-coin", "warm-bulb", "rain-note"] };
+      const stored = applyTrinketAction(full, { trinketId: "window-seat", action: "store" });
+      const needsReplace = canEquipTrinket(full, "window-seat");
+      const replaced = applyTrinketAction(full, { trinketId: "window-seat", action: "replace", replaceId: "old-coin" });
+      const invalid = applyTrinketAction(full, { trinketId: "window-seat", action: "replace" });
+      return { full, stored, needsReplace, replaced, invalid,
+        storedPair: getSynergies(["old-coin"]),
+        oneItemTags: getSynergies(["thermos", "old-coin"]),
+        equippedPair: getSynergies(["warm-bulb", "window-seat"]).map((item) => item.name) };
+    });
+    assert.match(result.stored.reason, /背包已满/);
+    assert.equal(result.needsReplace.ok, false);
+    assert.equal(result.invalid.ok, false);
+    assert.deepEqual(result.full.equippedTrinkets, ["old-coin", "warm-bulb", "rain-note"]);
+    assert.equal(result.replaced.state.inventory.length, 8);
+    assert.deepEqual(result.replaced.state.equippedTrinkets, ["window-seat", "warm-bulb", "rain-note"]);
+    assert.deepEqual(result.storedPair, []);
+    assert.deepEqual(result.oneItemTags, []);
+    assert.ok(result.equippedPair.includes("温暖构筑"));
+  });
+});
+
+test("trinket drawer: replacement can be previewed, canceled, then confirmed", async () => {
+  await withPage(async (page) => {
+    const html = await readFile(new URL(htmlUrl), "utf8");
+    const instrumented = html.replace(
+      /      render\(\);\s*\}\)\(\);\s*<\/script>/,
+      '      window.__drawerState = { state, trinkets, render }; render();\n    })();\n  </script>'
+    );
+    assert.notEqual(instrumented, html);
+    await page.setContent(instrumented);
+    await page.getByRole("button", { name: "开始新一局", exact: true }).click();
+    for (const [day, count] of [[1, 3], [2, 4]]) {
+      await finishRunDay(page, count);
+      await page.getByRole("button", { name: "继续到饰品", exact: true }).click();
+      await page.locator('[data-screen-panel="trinket-reward"] [data-trinket-choice]').first().click();
+      await page.getByRole("button", { name: "装备", exact: true }).last().click();
+      await page.getByRole("button", { name: "进入下一天", exact: true }).click();
+    }
+    await finishRunDay(page, 5);
+    await page.getByRole("button", { name: "查看今晚结局", exact: true }).click();
+    const drawer = page.locator('[data-screen-panel="trinket-reward"]');
+    await page.evaluate(() => {
+      const { state, trinkets, render } = window.__drawerState;
+      const extra = trinkets.find((item) => !state.inventory.includes(item.id) && !state.trinketChoices.some((choice) => choice.id === item.id));
+      state.inventory.push(extra.id);
+      state.equippedTrinkets.push(extra.id);
+      render();
+    });
+    await drawer.locator("[data-trinket-choice]:not([disabled])").first().click();
+    await drawer.getByRole("button", { name: "装备", exact: true }).click();
+    const before = await drawer.locator("[data-trinket-drawer]").innerText();
+    await drawer.locator('[data-action="preview-replace"]').first().click();
+    assert.match(await drawer.locator("[data-trinket-action-panel]").innerText(), /卸下.*装备/);
+    await drawer.locator('[data-action="confirm-replace"]').press("Escape");
+    assert.equal(await drawer.locator("[data-equipped-count]").innerText(), "3 / 3");
+    assert.equal(await drawer.locator("[data-trinket-drawer]").innerText(), before);
+    await drawer.locator("[data-trinket-choice]:not([disabled])").first().click();
+    await drawer.getByRole("button", { name: "装备", exact: true }).click();
+    await drawer.locator('[data-action="preview-replace"]').first().click();
+    await drawer.getByRole("button", { name: "确认替换", exact: true }).click();
+    assert.equal(await drawer.locator("[data-equipped-count]").innerText(), "3 / 3");
+    assert.equal(await drawer.locator("[data-inventory-count]").innerText(), "4 / 8");
+  });
+});
+
+test("trinket rules: synergy feedback requires equipped items and the round trigger", async () => {
+  await withPage(async (page) => {
+    const html = await readFile(new URL(htmlUrl), "utf8");
+    const instrumented = html.replace(
+      /      render\(\);\s*\}\)\(\);\s*<\/script>/,
+      '      window.__rules = { scoreSelection, customers }; render();\n    })();\n  </script>'
+    );
+    await page.setContent(instrumented);
+    const result = await page.evaluate(() => {
+      const { scoreSelection, customers } = window.__rules;
+      const customer = customers[0];
+      return {
+        stored: scoreSelection(customer, ["umbrella", "battery", "magazine"], [], null, 2),
+        warmHigh: scoreSelection(customer, ["coffee", "bar", "warmer"], ["warm-bulb", "thermos"], null, 1),
+        warmLow: scoreSelection(customer, ["umbrella", "battery", "magazine"], ["warm-bulb", "thermos"], null, 1),
+        clarityMiss: scoreSelection(customer, ["bar", "battery", "magazine"], ["rain-note", "old-badge"], null, 2)
+      };
+    });
+    assert.deepEqual(result.stored.triggeredSynergies, []);
+    assert.equal(result.warmHigh.triggeredSynergies.includes("温暖构筑"), false);
+    assert.equal(result.warmLow.triggeredSynergies.includes("温暖构筑"), true);
+    assert.equal(result.warmLow.score, 2);
+    assert.equal(result.clarityMiss.triggeredSynergies.includes("倾听构筑"), false);
+  });
+});
+
+for (const width of [320, 390, 1280]) {
+  test(`new surfaces ${width}px: dialogue and drawer fit without horizontal overflow`, async () => {
+    await withPage(async (page) => {
+      await startRun(page);
+      await page.getByRole("button", { name: "开始营业", exact: true }).click();
+      const dialogue = page.locator("[data-night-dialogue]");
+      assert.equal(await dialogue.isVisible(), true);
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+      await page.screenshot({ path: path.join(evidenceDir, `dialogue-${width}.png`) });
+      for (let index = 0; index < 3; index += 1) {
+        const ids = await page.locator("[data-product-card]:not([disabled])").evaluateAll((cards) => cards.slice(0, 3).map((card) => card.dataset.productId));
+        for (const id of ids) await page.locator(`[data-product-id="${id}"]`).click();
+        await page.getByRole("button", { name: "装袋", exact: true }).click();
+        await page.getByRole("button", { name: "继续", exact: true }).click();
+      }
+      await page.getByRole("button", { name: "继续到饰品", exact: true }).click();
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+      await page.locator('[data-screen-panel="trinket-reward"] [data-trinket-choice]').first().click();
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+      await page.screenshot({ path: path.join(evidenceDir, `drawer-${width}.png`) });
+    }, { viewport: { width, height: width < 600 ? 844 : 1000 }, reducedMotion: "reduce" });
+  });
+}
 
 test("selection: three-item limit, deselection and submission guard", async () => {
   await withPage(async (page) => {
