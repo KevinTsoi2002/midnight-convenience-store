@@ -4,7 +4,7 @@
 
 ## 试玩
 
-[在线试玩](https://kevintsoi2002.github.io/midnight-convenience-store/midnight-convenience-store.html)
+[在线试玩](https://kevintsoi2002.github.io/midnight-convenience-store/midnight-convenience-store.html?v=bd62ccb)
 
 也可以下载 `midnight-convenience-store.html`，用浏览器打开。游戏支持离线运行，无需安装依赖或启动服务。
 
